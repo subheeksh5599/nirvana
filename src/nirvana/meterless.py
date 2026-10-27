@@ -191,6 +191,18 @@ class ModelAdvisor:
 
 NVIDIA_URL = "https://integrate.api.nvidia.com/v1"
 NVIDIA_DEFAULT_MODEL = "nvidia/nvidia-nemotron-nano-9b-v2"
+OPENROUTER_URL = "https://openrouter.ai/api/v1"
+OPENROUTER_DEFAULT_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
+
+
+def free_nemotron(models: tuple[str, ...], preferred: str) -> str | None:
+    """OpenRouter routes only to free Nemotron variants here, so a run can never spend credit."""
+    if preferred in models and preferred.endswith(":free"):
+        return preferred
+    for m in models:
+        if m.startswith("nvidia/nemotron") and m.endswith(":free") and "safety" not in m and "embed" not in m:
+            return m
+    return None
 
 
 def model_provider(s, *, transport: httpx.BaseTransport | None = None) -> tuple[MeterlessProvider | None, ProviderStatus | None]:
@@ -199,6 +211,17 @@ def model_provider(s, *, transport: httpx.BaseTransport | None = None) -> tuple[
     found by auto-detect. Returns (provider when online, the last status seen)."""
     if s.meterless_url:
         p = MeterlessProvider(s.meterless_url, s.meterless_token, model=s.meterless_model, transport=transport)
+    elif s.openrouter_api_key:
+        model = s.meterless_model if s.meterless_model.endswith(":free") else OPENROUTER_DEFAULT_MODEL
+        p = MeterlessProvider(OPENROUTER_URL, s.openrouter_api_key, model=model, transport=transport)
+        st = p.status()
+        if st.state != "online":
+            return None, st
+        chosen = free_nemotron(st.models, p.model)
+        if chosen is None:
+            return None, ProviderStatus("offline", p.url, st.models, "no free Nemotron model listed")
+        p.model = chosen
+        return p, st
     elif s.nvidia_api_key:
         model = s.meterless_model if s.meterless_model.startswith("nvidia/") else NVIDIA_DEFAULT_MODEL
         p = MeterlessProvider(NVIDIA_URL, s.nvidia_api_key, model=model, transport=transport)

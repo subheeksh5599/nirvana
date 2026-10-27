@@ -289,3 +289,38 @@ def test_model_provider_auto_detect_when_nothing_configured():
 
     p, st = model_provider(_settings(), transport=httpx.MockTransport(handler))
     assert p is not None and p.url.endswith(":11434/v1") and p.model == "nemotron-3-nano:4b"
+
+
+def test_openrouter_only_routes_to_free_nemotron():
+    from nirvana.meterless import OPENROUTER_URL, model_provider
+
+    def handler(req):
+        return httpx.Response(200, json={"data": [{"id": "nvidia/nemotron-3-super-120b-a12b"}, {"id": "nvidia/nemotron-3.5-content-safety:free"}, {"id": "nvidia/nemotron-3.5-lightning:free"}]})
+
+    p, st = model_provider(_settings(OPENROUTER_API_KEY="sk-or"), transport=httpx.MockTransport(handler))
+    assert p is not None and p.url == OPENROUTER_URL
+    assert p.model == "nvidia/nemotron-3.5-lightning:free"
+
+
+def test_openrouter_without_free_nemotron_is_offline():
+    from nirvana.meterless import model_provider
+
+    def handler(req):
+        return httpx.Response(200, json={"data": [{"id": "nvidia/nemotron-3-super-120b-a12b"}]})
+
+    p, st = model_provider(_settings(OPENROUTER_API_KEY="sk-or"), transport=httpx.MockTransport(handler))
+    assert p is None and "no free Nemotron" in st.detail
+
+
+@pytest.mark.parametrize(
+    "models,preferred,expected",
+    [
+        (("nvidia/nemotron-3-ultra-550b-a55b:free",), "nvidia/nemotron-3-ultra-550b-a55b:free", "nvidia/nemotron-3-ultra-550b-a55b:free"),
+        (("nvidia/nemotron-3-ultra-550b-a55b",), "nvidia/nemotron-3-ultra-550b-a55b", None),
+        (("nvidia/nemotron-3.5-embed-1b:free", "nvidia/nemotron-3.5-lightning:free"), "x", "nvidia/nemotron-3.5-lightning:free"),
+    ],
+)
+def test_free_nemotron(models, preferred, expected):
+    from nirvana.meterless import free_nemotron
+
+    assert free_nemotron(models, preferred) == expected

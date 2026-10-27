@@ -46,14 +46,14 @@ def test_settings_defaults():
     assert (s.source_location, s.target_location) == ("samples.tpcds_sf1", "TPCDS_DB")
     assert s.zetaris_rest_url == "http://localhost:8888/api/v1.0"
     assert s.meterless_model == "meterless/auto"
-    assert s.configured() == {"databricks": False, "zetaris": False, "meterless": False, "nvidia": False}
+    assert s.configured() == {"databricks": False, "zetaris": False, "meterless": False, "nvidia": False, "openrouter": False}
     assert s.ledger_path.name == "ledger.sqlite"
 
 
 def test_settings_configured_flags_never_carry_values():
     s = settings({"DATABRICKS_HOST": "h", "DATABRICKS_TOKEN": "secret-token", "DATABRICKS_WAREHOUSE_ID": "w", "ZETARIS_API_KEY": "k"})
     flags = s.configured()
-    assert flags == {"databricks": True, "zetaris": True, "meterless": False, "nvidia": False}
+    assert flags == {"databricks": True, "zetaris": True, "meterless": False, "nvidia": False, "openrouter": False}
     assert "secret-token" not in json.dumps(flags)
 
 
