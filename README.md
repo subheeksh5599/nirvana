@@ -332,6 +332,8 @@ At the very end, and only as a proposer. When every rule has failed, `ModelAdvis
 
 Total execution time: 247 s on Databricks and 272 s on Zetaris for the 103 queries. The run's receipt and every row fingerprint are in `recordings/run-20261027-181712-e4eb1f.json`; `NIRVANA_MODE=recorded uv run nirvana serve` serves it without either engine.
 
+**H-MEM on the live pair.** The five order-tie queries were then run twice more with H-MEM on. In the first of those runs (`run-20261027-214018-c78072`), q6 and q75 proved order ties by running the explicit-NULL-order rewrite on Zetaris and stored that proof in H-MEM; q56, q64 and q77 recalled q6's proof and skipped the rewrite run. In the second run (`run-20261027-214316-14f1f0`) all five recalled it, and Zetaris time for the five queries fell from 32.2 s to 22.2 s with the same verdicts. Both runs are in `recordings/`.
+
 The first live attempt pointed Zetaris at its bundled `TPCDS_DB` sample instead. Alignment stopped it: 7 of 24 tables differ from Databricks' `samples.tpcds_sf1` in row count (`catalog_page` 11,718 vs 311,718; `catalog_sales` 1,439,935 vs 1,621,741; `store_sales` 2,879,789 vs 2,880,404), so every query over them would have compared two datasets rather than two engines.
 
 ## The workload
