@@ -227,3 +227,65 @@ def test_advisor_prompt_includes_engine_error():
     adv = ModelAdvisor(prov(lambda r: httpx.Response(200, json={"choices": [{"message": {"content": "no"}}]})))
     assert adv.propose(query_id="q1", target_sql="SELECT x", diff={}, target_error="UNRESOLVED_ROUTINE: foo") is None
     assert "UNRESOLVED_ROUTINE" in adv.last_prompt
+
+
+def _settings(**env):
+    from nirvana.config import settings
+
+    return settings(env)
+
+
+def test_model_provider_prefers_explicit_url():
+    from nirvana.meterless import model_provider
+
+    def handler(req):
+        assert req.url.host == "box.local"
+        return httpx.Response(200, json={"data": [{"id": "meterless/auto"}]})
+
+    p, st = model_provider(_settings(METERLESS_URL="box.local:8088", NVIDIA_API_KEY="nv"), transport=httpx.MockTransport(handler))
+    assert p is not None and p.url == "http://box.local:8088/v1" and st.state == "online"
+
+
+def test_model_provider_uses_nvidia_key_and_picks_a_nemotron():
+    from nirvana.meterless import NVIDIA_URL, model_provider
+
+    seen = {}
+
+    def handler(req):
+        seen["auth"] = req.headers["authorization"]
+        seen["url"] = str(req.url)
+        return httpx.Response(200, json={"data": [{"id": "meta/llama-3.1-8b-instruct"}, {"id": "nvidia/llama-3.3-nemotron-super-49b-v1.5"}]})
+
+    p, st = model_provider(_settings(NVIDIA_API_KEY="nvapi-x"), transport=httpx.MockTransport(handler))
+    assert p is not None and p.url == NVIDIA_URL
+    assert seen["auth"] == "Bearer nvapi-x" and seen["url"] == NVIDIA_URL + "/models"
+    assert p.model == "nvidia/llama-3.3-nemotron-super-49b-v1.5"
+
+
+def test_model_provider_keeps_configured_nvidia_model():
+    from nirvana.meterless import model_provider
+
+    def handler(req):
+        return httpx.Response(200, json={"data": [{"id": "nvidia/a-nemotron"}, {"id": "nvidia/b-nemotron"}]})
+
+    p, _ = model_provider(_settings(NVIDIA_API_KEY="k", METERLESS_MODEL="nvidia/b-nemotron"), transport=httpx.MockTransport(handler))
+    assert p.model == "nvidia/b-nemotron"
+
+
+def test_model_provider_refused_key_returns_none():
+    from nirvana.meterless import model_provider
+
+    p, st = model_provider(_settings(NVIDIA_API_KEY="bad"), transport=httpx.MockTransport(lambda r: httpx.Response(401)))
+    assert p is None and st.state == "unauthorized"
+
+
+def test_model_provider_auto_detect_when_nothing_configured():
+    from nirvana.meterless import model_provider
+
+    def handler(req):
+        if req.url.port == 11434:
+            return httpx.Response(200, json={"data": [{"id": "nemotron-3-nano:4b"}]})
+        raise httpx.ConnectError("closed")
+
+    p, st = model_provider(_settings(), transport=httpx.MockTransport(handler))
+    assert p is not None and p.url.endswith(":11434/v1") and p.model == "nemotron-3-nano:4b"

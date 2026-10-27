@@ -44,7 +44,7 @@ def load_env_file(path: str | Path | None = None, *, override: bool = False) -> 
     return None
 
 
-SECRET_KEYS = ("DATABRICKS_TOKEN", "ZETARIS_API_KEY", "METERLESS_TOKEN")
+SECRET_KEYS = ("DATABRICKS_TOKEN", "ZETARIS_API_KEY", "METERLESS_TOKEN", "NVIDIA_API_KEY")
 
 
 @dataclass(frozen=True)
@@ -63,6 +63,7 @@ class Settings:
     meterless_url: str
     meterless_token: str
     meterless_model: str
+    nvidia_api_key: str
     rehearsal_scale: float
     max_rows: int
 
@@ -84,6 +85,7 @@ class Settings:
             "databricks": bool(self.databricks_host and self.databricks_token and self.databricks_warehouse_id),
             "zetaris": bool(self.zetaris_api_key and self.zetaris_org_id),
             "meterless": bool(self.meterless_url or self.meterless_token),
+            "nvidia": bool(self.nvidia_api_key),
         }
 
 
@@ -109,6 +111,7 @@ def settings(env: dict[str, str] | None = None) -> Settings:
         meterless_url=g("METERLESS_URL"),
         meterless_token=g("METERLESS_TOKEN"),
         meterless_model=g("METERLESS_MODEL", "meterless/auto"),
+        nvidia_api_key=g("NVIDIA_API_KEY"),
         rehearsal_scale=float(g("NIRVANA_REHEARSAL_SCALE", "0.01") or "0.01"),
         max_rows=int(g("NIRVANA_MAX_ROWS", "100000") or "100000"),
     )

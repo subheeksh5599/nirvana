@@ -45,7 +45,7 @@ def test_health(client):
 
 def test_status_without_check_reports_configuration_only(client):
     r = client.get("/api/status").json()
-    assert r["configured"] == {"databricks": False, "zetaris": False, "meterless": True}
+    assert r["configured"] == {"databricks": False, "zetaris": False, "meterless": True, "nvidia": False}
     assert "engines" not in r
     assert r["locations"] == {"source": "samples.tpcds_sf1", "target": "TPCDS_DB"}
 

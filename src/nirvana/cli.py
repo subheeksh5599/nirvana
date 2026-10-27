@@ -38,15 +38,12 @@ def cmd_run(args) -> int:
     src, tgt = build(kind_src, s, role="source"), build(kind_tgt, s, role="target")
     advisor = memory = None
     if args.model:
-        from .meterless import ModelAdvisor, MeterlessProvider, auto_detect, pick_model
+        from .meterless import ModelAdvisor, model_provider
 
-        p = MeterlessProvider(s.meterless_url, s.meterless_token, model=s.meterless_model) if s.meterless_url else auto_detect(s.meterless_token, model=s.meterless_model)[0]
+        p, st = model_provider(s)
         if p is not None:
-            st = p.status()
-            if st.state == "online":
-                p.model = pick_model(st.models, s.meterless_model)
-                advisor = ModelAdvisor(p)
-        print(f"model: {'on, ' + p.url + ' ' + p.model if advisor and p else 'not reachable, rules only'}", file=sys.stderr)
+            advisor = ModelAdvisor(p)
+        print(f"model: {p.url + ' ' + p.model if p else 'not reachable (' + (st.detail if st else 'no route') + '), rules only'}", file=sys.stderr)
     if args.memory:
         from .memory import HMemMemory
 

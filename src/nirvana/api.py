@@ -63,20 +63,9 @@ class State:
         return self._memory
 
     def provider(self):
-        from .meterless import MeterlessProvider, auto_detect, pick_model
+        from .meterless import model_provider
 
-        s = self.settings
-        if s.meterless_url:
-            p = MeterlessProvider(s.meterless_url, s.meterless_token, model=s.meterless_model)
-            st = p.status()
-        else:
-            found, seen = auto_detect(s.meterless_token, model=s.meterless_model)
-            if found is None:
-                return None, seen[-1] if seen else None
-            p, st = found, found.status()
-        if st.state == "online" and st.models:
-            p.model = pick_model(st.models, s.meterless_model)
-        return (p if st.state == "online" else None), st
+        return model_provider(self.settings)
 
 
 def create_app(s: Settings | None = None, mode: str | None = None) -> FastAPI:

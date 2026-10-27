@@ -187,3 +187,30 @@ class ModelAdvisor:
     def propose(self, *, query_id: str, target_sql: str, diff: dict[str, Any], target_error: str | None) -> str | None:
         self.last_prompt = self.prompt(query_id=query_id, target_sql=target_sql, diff=diff, target_error=target_error)
         return extract_sql(self.provider.complete(SYSTEM, self.last_prompt))
+
+
+NVIDIA_URL = "https://integrate.api.nvidia.com/v1"
+NVIDIA_DEFAULT_MODEL = "nvidia/nvidia-nemotron-nano-9b-v2"
+
+
+def model_provider(s, *, transport: httpx.BaseTransport | None = None) -> tuple[MeterlessProvider | None, ProviderStatus | None]:
+    """The model route, in this order: an explicit METERLESS_URL; NVIDIA's hosted
+    OpenAI-compatible endpoint when NVIDIA_API_KEY is set; otherwise a Meterless runtime
+    found by auto-detect. Returns (provider when online, the last status seen)."""
+    if s.meterless_url:
+        p = MeterlessProvider(s.meterless_url, s.meterless_token, model=s.meterless_model, transport=transport)
+    elif s.nvidia_api_key:
+        model = s.meterless_model if s.meterless_model.startswith("nvidia/") else NVIDIA_DEFAULT_MODEL
+        p = MeterlessProvider(NVIDIA_URL, s.nvidia_api_key, model=model, transport=transport)
+    else:
+        found, seen = auto_detect(s.meterless_token, transport=transport, model=s.meterless_model)
+        if found is None:
+            return None, (seen[-1] if seen else None)
+        p = found
+    st = p.status()
+    if st.state != "online":
+        return None, st
+    if st.models and p.model not in st.models:
+        nemotron = [m for m in st.models if "nemotron" in m.lower()]
+        p.model = nemotron[0] if nemotron and not p.model.startswith("meterless/") else pick_model(st.models, p.model)
+    return p, st
