@@ -267,6 +267,8 @@ def create_app(s: Settings | None = None, mode: str | None = None) -> FastAPI:
 
         @app.get("/{path:path}", include_in_schema=False)
         def spa(path: str):
+            if path == "api" or path.startswith("api/"):
+                raise HTTPException(404, f"no endpoint /{path}")
             f = web / path
             if path and f.is_file() and web in f.resolve().parents:
                 return FileResponse(f)
