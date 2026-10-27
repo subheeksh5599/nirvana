@@ -11,6 +11,8 @@ Two modes:
 from __future__ import annotations
 
 import asyncio
+import dataclasses
+import re
 import json
 import os
 import threading
@@ -41,6 +43,7 @@ class RunRequest(BaseModel):
     queries: list[str] | None = Field(None, description="query ids; all 103 when omitted")
     use_model: bool = Field(True, description="ask the Meterless runtime for a rewrite when the rules find none")
     use_memory: bool = Field(True, description="recall and store proven fixes in H-MEM")
+    target_location: str | None = Field(None, description="the Zetaris database to judge against; the configured one when omitted")
 
 
 class DiffRequest(BaseModel):
@@ -164,8 +167,13 @@ def create_app(s: Settings | None = None, mode: str | None = None) -> FastAPI:
         if req.engines == "rehearsal":
             src, tgt, mode = build("rehearsal", s, role="source"), build("rehearsal", s, role="target"), "rehearsal"
         elif req.engines == "live":
+            ts = s
+            if req.target_location:
+                if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", req.target_location):
+                    raise HTTPException(400, "target_location must be a plain database name")
+                ts = dataclasses.replace(s, target_location=req.target_location)
             try:
-                src, tgt = build(s.source, s, role="source"), build(s.target, s, role="target")
+                src, tgt = build(s.source, s, role="source"), build(s.target, ts, role="target")
             except ValueError as e:
                 raise HTTPException(400, f"engines not configured: {e}")
             mode = "live"

@@ -183,3 +183,9 @@ def test_openapi_lists_routes(client):
     paths = client.get("/openapi.json").json()["paths"]
     for p in ("/api/runs", "/api/runs/{run_id}/judgements/{query_id}", "/api/runs/{run_id}/stream", "/api/workload", "/api/status", "/api/memory"):
         assert p in paths
+
+
+@pytest.mark.parametrize("loc", ["a;b", "x y", "1db", "db.t"])
+def test_run_rejects_odd_target_locations(client, loc):
+    r = client.post("/api/runs", json={"engines": "live", "queries": ["q3"], "target_location": loc})
+    assert r.status_code == 400 and "target_location" in r.json()["detail"]
