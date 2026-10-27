@@ -214,3 +214,4 @@ pre.sql { margin: 0; padding: 14px 16px; background: var(--surface); border-radi
   .rail .group, .rail .foot { display: none; }
   .hero h1 { font-size: 38px; }
 }
+.a-explained { background: var(--info-wash); color: var(--info); }
