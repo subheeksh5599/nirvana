@@ -265,7 +265,7 @@ At the very end, and only as a proposer. When every rule has failed, `ModelAdvis
 
 ## Pre-existing work, declared
 
-Everything under `src/`, `tests/`, `bridges/`, `scripts/` and `web/` was written during the hackathon (22 to 27 Oct 2026); the commit history shows it. These parts were not:
+**None of our own.** Nirvana was started during the hackathon (27 Oct 2026), and every file under `src/`, `tests/`, `bridges/`, `scripts/` and `web/` was written for it; the commit history shows it. The third-party components below are used unchanged and are declared so judges can tell them apart from the new work:
 
 | Component | Where | Origin | Changed? |
 |---|---|---|---|
