@@ -199,13 +199,13 @@ async function landing() {
 
 const NAV = [
   ["Run", [["overview", "Overview"], ["run", "Live run"]]],
-  ["Results", [["queries", "Queries"], ["tables", "Tables"], ["receipt", "Receipt"]]],
+  ["Results", [["queries", "Queries"], ["tables", "Tables"], ["rows", "Row diff"], ["receipt", "Receipt"]]],
   ["Library", [["workload", "Workload"], ["memory", "Memory"], ["history", "History"]]],
 ];
 
 function shell(active, title) {
   const runQ = state.runId ? `?run=${encodeURIComponent(state.runId)}` : "";
-  const items = NAV.map(([g, list]) => `<div class="group">${g}</div>` + list.map(([k, label]) => `<a class="item ${k === active ? "active" : ""}" href="/app/${k}${["overview", "workload", "memory", "history"].includes(k) ? "" : runQ}" data-nav><span>${label}</span><span class="count" id="count-${k}"></span></a>`).join("")).join("");
+  const items = NAV.map(([g, list]) => `<div class="group">${g}</div>` + list.map(([k, label]) => `<a class="item ${k === active ? "active" : ""}" href="/app/${k}${["overview", "workload", "memory", "history", "rows"].includes(k) ? "" : runQ}" data-nav><span>${label}</span><span class="count" id="count-${k}"></span></a>`).join("")).join("");
   root.innerHTML = `
   <div class="app">
     <aside class="rail">
@@ -557,6 +557,67 @@ async function paneReceipt() {
     </tbody></table></div></div>`;
 }
 
+// ------------------------------------------------------------------ row diff
+
+const TABLES = ["call_center", "catalog_page", "catalog_returns", "catalog_sales", "customer", "customer_address", "customer_demographics", "date_dim", "household_demographics", "income_band", "inventory", "item", "promotion", "reason", "ship_mode", "store", "store_returns", "store_sales", "time_dim", "warehouse", "web_page", "web_returns", "web_sales", "web_site"];
+
+function diffCard(d) {
+  const head = d.error
+    ? `<span class="tag v-keep">Failed</span>`
+    : d.identical ? `<span class="tag v-move">Same rows</span>` : `<span class="tag v-keep">Rows differ</span>`;
+  const sample = (rows, label) => rows && rows.length ? `<div class="note" style="margin:12px 0 6px">${label}</div><div class="scroll"><table class="t"><thead><tr>${d.columns.map((c) => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v) => `<td class="mono">${esc(v ?? "NULL")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : "";
+  return `<div class="panel"><div class="panel-head"><div><h2 class="mono">${esc(d.table)}</h2><div class="sub">${esc(d.reference)} against ${esc(d.candidate)}, ${esc(when(d.at))}, ${ms(d.ms)} on Zetaris</div></div>${head}</div>
+    <div class="panel-body">${d.error ? `<div class="error">${esc(d.error)}</div>` : `
+      <div class="grid2">
+        <div class="stat"><div class="k">Rows only in ${esc(d.reference)}</div><div class="v">${fmt(d.only_in_reference)}</div></div>
+        <div class="stat"><div class="k">Rows only in ${esc(d.candidate)}</div><div class="v">${fmt(d.only_in_candidate)}</div></div>
+      </div>
+      ${sample(d.sample_reference, `Rows in ${esc(d.reference)} that ${esc(d.candidate)} does not have`)}
+      ${sample(d.sample_candidate, `Rows in ${esc(d.candidate)} that ${esc(d.reference)} does not have`)}
+      <details style="margin-top:12px"><summary class="note" style="cursor:pointer">The federated SQL Zetaris ran</summary><pre class="sql" style="margin-top:8px">${esc((d.sql || []).join(";\n\n"))}</pre></details>`}
+    </div></div>`;
+}
+
+async function paneRows() {
+  const pane = shell("rows", "Row diff");
+  pane.innerHTML = `
+    <div class="panel"><div class="panel-head"><div><h2>Which rows differ, not just how many</h2><div class="sub">Zetaris reads both copies in one federated query, from different stores, and returns the rows each side lacks</div></div></div>
+      <div class="panel-body">
+        <div class="form-row">
+          <select id="rd-table" class="btn">${TABLES.map((t) => `<option ${t === "catalog_page" ? "selected" : ""}>${t}</option>`).join("")}</select>
+          <input type="text" id="rd-ref" value="NIRVANA_TPCDS" style="min-width:180px" title="The Zetaris database holding the files Databricks was loaded from">
+          <span class="note">against</span>
+          <input type="text" id="rd-cand" value="TPCDS_DB" style="min-width:180px" title="The Zetaris database to check">
+          <button class="btn primary" id="rd-go">Compare on Zetaris</button>
+          <span class="note" id="rd-msg"></span>
+        </div>
+        <div class="note">NIRVANA_TPCDS: the parquet files Databricks was loaded from, on local disk. TPCDS_DB: the TPC-DS sample Zetaris ships, on a public S3 bucket.</div>
+      </div></div>
+    <div id="rd-list"><div class="empty">Loading</div></div>`;
+  const list = document.getElementById("rd-list");
+  const load = async () => {
+    try {
+      const ds = await api("/diffs");
+      list.innerHTML = ds.length ? ds.map(diffCard).join("") : `<div class="panel"><div class="empty">No comparison yet.</div></div>`;
+      const c = document.getElementById("count-rows");
+      if (c) c.textContent = ds.length || "";
+    } catch (e) { list.innerHTML = `<div class="panel"><div class="empty">${esc(e.message)}</div></div>`; }
+  };
+  document.getElementById("rd-go").addEventListener("click", async () => {
+    const btn = document.getElementById("rd-go"), msg = document.getElementById("rd-msg");
+    btn.disabled = true; msg.className = "note"; msg.textContent = "Zetaris is comparing the two copies";
+    const t0 = Date.now();
+    const tick = setInterval(() => { msg.textContent = `Zetaris is comparing the two copies, ${Math.round((Date.now() - t0) / 1000)} s`; }, 1000);
+    try {
+      await api("/diffs", { method: "POST", body: JSON.stringify({ table: document.getElementById("rd-table").value, reference: document.getElementById("rd-ref").value.trim(), candidate: document.getElementById("rd-cand").value.trim(), sample: 5 }) });
+      msg.textContent = "";
+      await load();
+    } catch (e) { msg.className = "error"; msg.textContent = e.message; }
+    clearInterval(tick); btn.disabled = false;
+  });
+  load();
+}
+
 // ------------------------------------------------------------------ library
 
 async function paneWorkload(qid) {
@@ -621,6 +682,7 @@ async function render() {
     if (pane === "q" && arg) return await paneQuery(arg);
     if (pane === "tables") return await paneTables();
     if (pane === "receipt") return await paneReceipt();
+    if (pane === "rows") return await paneRows();
     if (pane === "workload") return await paneWorkload(arg);
     if (pane === "memory") return await paneMemory();
     if (pane === "history") return await paneHistory();
