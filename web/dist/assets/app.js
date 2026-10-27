@@ -199,13 +199,13 @@ async function landing() {
 
 const NAV = [
   ["Run", [["overview", "Overview"], ["run", "Live run"]]],
-  ["Results", [["queries", "Queries"], ["tables", "Tables"], ["rows", "Row diff"], ["receipt", "Receipt"]]],
+  ["Results", [["queries", "Queries"], ["tables", "Tables"], ["rows", "Row diff"], ["guard", "Guard rules"], ["receipt", "Receipt"]]],
   ["Library", [["workload", "Workload"], ["memory", "Memory"], ["history", "History"]]],
 ];
 
 function shell(active, title) {
   const runQ = state.runId ? `?run=${encodeURIComponent(state.runId)}` : "";
-  const items = NAV.map(([g, list]) => `<div class="group">${g}</div>` + list.map(([k, label]) => `<a class="item ${k === active ? "active" : ""}" href="/app/${k}${["overview", "workload", "memory", "history", "rows"].includes(k) ? "" : runQ}" data-nav><span>${label}</span><span class="count" id="count-${k}"></span></a>`).join("")).join("");
+  const items = NAV.map(([g, list]) => `<div class="group">${g}</div>` + list.map(([k, label]) => `<a class="item ${k === active ? "active" : ""}" href="/app/${k}${["overview", "workload", "memory", "history", "rows", "guard"].includes(k) ? "" : runQ}" data-nav><span>${label}</span><span class="count" id="count-${k}"></span></a>`).join("")).join("");
   root.innerHTML = `
   <div class="app">
     <aside class="rail">
@@ -581,17 +581,17 @@ function diffCard(d) {
 async function paneRows() {
   const pane = shell("rows", "Row diff");
   pane.innerHTML = `
-    <div class="panel"><div class="panel-head"><div><h2>Which rows differ, not just how many</h2><div class="sub">Zetaris reads both copies in one federated query, from different stores, and returns the rows each side lacks</div></div></div>
+    <div class="panel"><div class="panel-head"><div><h2>Which rows differ, not just how many</h2><div class="sub">Zetaris reads both copies in one federated query, even when one of them is Databricks itself, and returns the rows each side lacks</div></div></div>
       <div class="panel-body">
         <div class="form-row">
           <select id="rd-table" class="btn">${TABLES.map((t) => `<option ${t === "catalog_page" ? "selected" : ""}>${t}</option>`).join("")}</select>
-          <input type="text" id="rd-ref" value="NIRVANA_TPCDS" style="min-width:180px" title="The Zetaris database holding the files Databricks was loaded from">
+          <input type="text" id="rd-ref" value="DATABRICKS" style="min-width:180px" title="DATABRICKS reads the Databricks warehouse itself through Zetaris' JDBC datasource">
           <span class="note">against</span>
           <input type="text" id="rd-cand" value="TPCDS_DB" style="min-width:180px" title="The Zetaris database to check">
           <button class="btn primary" id="rd-go">Compare on Zetaris</button>
           <span class="note" id="rd-msg"></span>
         </div>
-        <div class="note">NIRVANA_TPCDS: the parquet files Databricks was loaded from, on local disk. TPCDS_DB: the TPC-DS sample Zetaris ships, on a public S3 bucket.</div>
+        <div class="note">DATABRICKS: the Databricks warehouse itself, read by Zetaris over JDBC. TPCDS_DB: the TPC-DS sample Zetaris ships, on a public S3 bucket. NIRVANA_TPCDS and NIRVANA_CSV: the same tables as parquet and as CSV exports, on local disk.</div>
       </div></div>
     <div id="rd-list"><div class="empty">Loading</div></div>`;
   const list = document.getElementById("rd-list");
@@ -612,6 +612,57 @@ async function paneRows() {
       await api("/diffs", { method: "POST", body: JSON.stringify({ table: document.getElementById("rd-table").value, reference: document.getElementById("rd-ref").value.trim(), candidate: document.getElementById("rd-cand").value.trim(), sample: 5 }) });
       msg.textContent = "";
       await load();
+    } catch (e) { msg.className = "error"; msg.textContent = e.message; }
+    clearInterval(tick); btn.disabled = false;
+  });
+  load();
+}
+
+// ------------------------------------------------------------------ guard rules
+
+function guardCard(g) {
+  const broken = (g.rules || []).filter((r) => r.invalid);
+  const head = g.error ? `<span class="tag v-keep">Failed</span>` : broken.length ? `<span class="tag v-keep">${broken.length} rule${broken.length === 1 ? "" : "s"} broken</span>` : `<span class="tag v-move">All rules hold</span>`;
+  const rows = (g.rules || []).slice().sort((a, b) => (b.invalid || 0) - (a.invalid || 0)).map((r) => `
+    <tr><td class="mono">${esc(r.column)}</td><td class="muted">${esc(r.why)}</td>
+    <td class="num">${r.total == null ? "" : fmt(r.total)}</td><td class="num">${r.invalid == null ? (r.error ? "" : "") : fmt(r.invalid)}</td>
+    <td>${r.error ? `<span class="error">${esc(r.error)}</span>` : r.invalid ? `<span class="tag v-keep">Broken</span>` : `<span class="tag v-move">Holds</span>`}</td></tr>
+    ${r.sample && r.sample.length ? `<tr><td></td><td colspan="4"><div class="note" style="margin-bottom:6px">Rows Zetaris flags (${esc(r.expression)})</div><div class="scroll"><table class="t"><thead><tr>${g.columns.map((c) => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${r.sample.map((x) => `<tr>${x.map((v, i) => `<td class="mono" style="${g.columns[i] === r.column ? "background:var(--bad-wash)" : ""}">${esc(v ?? "NULL")}</td>`).join("")}</tr>`).join("")}</tbody></table></div></td></tr>` : ""}`).join("");
+  return `<div class="panel"><div class="panel-head"><div><h2 class="mono">${esc(g.table)}</h2><div class="sub">rules from ${esc(g.source)}, enforced by Zetaris on ${esc(g.candidate)}, ${esc(when(g.at))}, ${ms(g.ms)}</div></div>${head}</div>
+    ${g.error ? `<div class="panel-body"><div class="error">${esc(g.error)}</div></div>` : `<div class="scroll"><table class="t"><thead><tr><th>Column</th><th>Rule, from Databricks</th><th class="num">Rows checked</th><th class="num">Rows breaking it</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="panel-body"><details><summary class="note" style="cursor:pointer">The Zetaris statements (USL and DQ)</summary><pre class="sql" style="margin-top:8px">${esc((g.sql || []).join(";\n\n"))}</pre></details></div>`}</div>`;
+}
+
+async function paneGuard() {
+  const pane = shell("guard", "Guard rules");
+  pane.innerHTML = `
+    <div class="panel"><div class="panel-head"><div><h2>Keep the target honest after the move</h2><div class="sub">Nirvana measures each column on Databricks and installs the result as Zetaris data-quality rules on the migrated copy</div></div></div>
+      <div class="panel-body"><div class="form-row">
+        <select id="gd-table" class="btn">${TABLES.map((t) => `<option ${t === "customer_address" ? "selected" : ""}>${t}</option>`).join("")}</select>
+        <span class="note">migrated to</span>
+        <input type="text" id="gd-cand" value="NIRVANA_CSV" style="min-width:180px">
+        <button class="btn primary" id="gd-go">Install and run on Zetaris</button>
+        <span class="note" id="gd-msg"></span>
+      </div>
+      <div class="note">NIRVANA_CSV: the same tables exported to CSV and loaded with inferred types, a common migration path.</div></div></div>
+    <div id="gd-list"><div class="empty">Loading</div></div>`;
+  const list = document.getElementById("gd-list");
+  const load = async () => {
+    try {
+      const gs = await api("/guards");
+      list.innerHTML = gs.length ? gs.map(guardCard).join("") : `<div class="panel"><div class="empty">No guard installed yet.</div></div>`;
+      const c = document.getElementById("count-guard");
+      if (c) c.textContent = gs.length || "";
+    } catch (e) { list.innerHTML = `<div class="panel"><div class="empty">${esc(e.message)}</div></div>`; }
+  };
+  document.getElementById("gd-go").addEventListener("click", async () => {
+    const btn = document.getElementById("gd-go"), msg = document.getElementById("gd-msg");
+    btn.disabled = true; msg.className = "note";
+    const t0 = Date.now();
+    const tick = setInterval(() => { msg.textContent = `Measuring Databricks, installing rules on Zetaris, ${Math.round((Date.now() - t0) / 1000)} s`; }, 1000);
+    try {
+      await api("/guards", { method: "POST", body: JSON.stringify({ table: document.getElementById("gd-table").value, candidate: document.getElementById("gd-cand").value.trim(), sample: 5 }) });
+      msg.textContent = ""; await load();
     } catch (e) { msg.className = "error"; msg.textContent = e.message; }
     clearInterval(tick); btn.disabled = false;
   });
@@ -683,6 +734,7 @@ async function render() {
     if (pane === "tables") return await paneTables();
     if (pane === "receipt") return await paneReceipt();
     if (pane === "rows") return await paneRows();
+    if (pane === "guard") return await paneGuard();
     if (pane === "workload") return await paneWorkload(arg);
     if (pane === "memory") return await paneMemory();
     if (pane === "history") return await paneHistory();
