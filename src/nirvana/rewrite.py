@@ -75,7 +75,7 @@ def total_order(sql: str, ctx: dict) -> str | None:
     for i, proj in enumerate(t.expressions, start=1):
         key = exp.Literal.number(i)
         if proj.alias_or_name and proj.alias_or_name not in have:
-            order.append("expressions", exp.Ordered(this=key))
+            order.append("expressions", exp.Ordered(this=key, nulls_first=True))
             added = True
     return t.sql(dialect=DIALECT) if added else None
 
@@ -85,11 +85,12 @@ def cast_divisions_to_double(sql: str, ctx: dict) -> str | None:
     Fixes engines that divide two integers as integers (7 / 2 = 3)."""
     t = _tree(sql)
     changed = False
-    for d in list(t.find_all(exp.Div)):
+    # Innermost first, so a / b / c becomes CAST(CAST(a AS DOUBLE) / b AS DOUBLE) / c.
+    for d in reversed(list(t.find_all(exp.Div))):
         left = d.this
         if isinstance(left, exp.Cast) and left.to.is_type("double"):
             continue
-        d.set("this", exp.Cast(this=left.copy(), to=exp.DataType.build("double")))
+        d.set("this", exp.Cast(this=left, to=exp.DataType.build("double")))
         changed = True
     return t.sql(dialect=DIALECT) if changed else None
 

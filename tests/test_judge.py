@@ -314,3 +314,17 @@ def test_unknown_recalled_names_are_ignored(source, intdiv):
 def test_features_are_plain_facts():
     f = features(None, "select a / b", "UNRESOLVED_COLUMN: x", {"a": "decimal(7,2)"})
     assert f == ["target_error", "error:unresolved_column", "has_division", "reads_retyped_columns"]
+
+
+@pytest.mark.parametrize("sql,expected", [("SELECT a / b FROM t", True), ("SELECT a FROM t WHERE s = 'N/A'", False), ("SELECT 1", False), ("not sql at all (", False)])
+def test_has_division_ignores_string_literals(sql, expected):
+    from nirvana.judge import has_division
+
+    assert has_division(sql) is expected
+
+
+def test_q41_is_not_flagged_as_dividing():
+    from nirvana.judge import has_division
+
+    assert has_division(get("q41").sql) is False
+    assert has_division(get("q90").sql) is True

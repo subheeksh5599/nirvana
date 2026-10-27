@@ -20,6 +20,9 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Protocol
 
+import sqlglot
+from sqlglot import exp
+
 from . import rewrite as rw
 from .align import TableAlignment
 from .compare import Comparison, compare
@@ -102,6 +105,14 @@ def _sample(c: Comparison) -> dict[str, Any]:
     }
 
 
+def has_division(sql: str) -> bool:
+    """True when the statement divides (a '/' inside a string literal such as 'N/A' does not count)."""
+    try:
+        return any(True for _ in sqlglot.parse_one(sql, read="spark").find_all(exp.Div))
+    except Exception:
+        return False
+
+
 def features(cmp: Comparison | None, target_sql: str, target_error: str | None, drift: dict[str, str]) -> list[str]:
     """Plain facts about a difference, used to recall which rewrite fixed a similar one."""
     f = []
@@ -114,7 +125,7 @@ def features(cmp: Comparison | None, target_sql: str, target_error: str | None, 
             f.append("output_type_changed")
         if cmp.source_rows != cmp.target_rows:
             f.append("row_count_changed")
-    if "/" in target_sql:
+    if has_division(target_sql):
         f.append("has_division")
     if drift:
         f.append("reads_retyped_columns")
@@ -267,7 +278,7 @@ class Judge:
             base.append("transpile_from_source")
         if drift:
             base.append("cast_drifted_columns")
-        if "/" in t_sql:
+        if has_division(t_sql):
             base.append("cast_divisions_to_double")
         if cmp is not None and cmp.ordered:
             base.append("explicit_null_order")
