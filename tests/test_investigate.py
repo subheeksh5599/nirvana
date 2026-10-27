@@ -291,3 +291,51 @@ def test_store_keeps_live_and_finished(tmp_path):
     assert InvestigationStore(tmp_path / "i.jsonl").get("a1")["status"] == "done"
     st.put(Investigation("b2", "query", "q1", "C", status="done", started_at=2.0))
     assert [x["id"] for x in st.all()] == ["b2", "a1"]
+
+
+TYPED = {**JUDGED, "comparison": {"status": "different", "mismatched_columns": ["total"],
+                                  "type_mismatches": [{"name": "total", "source": "decimal(38,2)", "target": "double"}]}}
+
+
+def test_cast_output_reads_outputs_at_the_declared_type(pair):
+    src, tgt = pair
+    inv = Agent(Script({"tool": "cast_output", "args": {"columns": []}}), src, tgt, source_location="s").investigate_query("qx", "t", TYPED)
+    assert inv.steps[0].result["status"] == "identical" and inv.cleared
+    assert "CAST(ROUND(" in inv.findings[0].expression and "DECIMAL(38, 2)" in inv.findings[0].expression
+
+
+def test_cast_output_refuses_columns_without_a_declared_type(pair):
+    src, tgt = pair
+    inv = Agent(Script({"tool": "cast_output", "args": {"columns": ["k"]}}, {"tool": "finish"}), src, tgt,
+                source_location="s").investigate_query("qx", "t", TYPED)
+    assert "no declared source type" in inv.steps[0].result["error"]
+
+
+class Flaky(Script):
+    def __init__(self, *replies):
+        super().__init__(*replies)
+        self.model, self.used = "main", []
+
+    def complete(self, system, user, **kw):
+        self.used.append(self.model)
+        if self.model == "main":
+            raise RuntimeError("502")
+        return super().complete(system, user)
+
+
+def test_a_failed_model_call_falls_back_once():
+    m = Flaky({"tool": "finish", "args": {"summary": "ok"}})
+    a = agent(m)
+    a.fallback_model = "spare"
+    inv = a.investigate_table("addr", "CSV", ALIGN)
+    assert inv.summary == "ok" and m.used == ["main", "spare"] and m.model == "main"
+
+
+def test_a_rate_limited_model_stops_the_investigation():
+    inv = agent(Script(RuntimeError("429: Rate limit exceeded: free-models-per-day"), {"tool": "finish"})).investigate_table("addr", "CSV", ALIGN)
+    assert len(inv.steps) == 1 and inv.summary.startswith("stopped: the model route is unavailable")
+
+
+def test_three_model_failures_in_a_row_stop_it():
+    inv = agent(Script(RuntimeError("502"), RuntimeError("502"), RuntimeError("502"), {"tool": "finish"})).investigate_table("addr", "CSV", ALIGN)
+    assert len(inv.steps) == 3 and inv.summary.startswith("stopped")

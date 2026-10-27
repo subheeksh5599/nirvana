@@ -45,6 +45,7 @@ Tools:
 - verify_repair {"column": c, "expression": e}: e is a Spark SQL expression over x, the target's value of c (for example lpad(cast(x AS string), 5, '0')). Counts rows where e differs from the source's value. Zero means the repair is proven.
 - install_guard {"column": c}: installs the source's measured shape of c as a Zetaris data-quality rule on the target and runs it.
 - apply_rule {"rule": r}: (queries only) applies one of Nirvana's rewrite rules to the Zetaris query and compares its rows with the source's answer. Rules: cast_drifted_columns (read retyped input columns at their source type), cast_divisions_to_double, explicit_null_order, transpile_from_source.
+- cast_output {"columns": [..]}: (queries only) reads the named output columns (all differing ones if the list is empty) at exactly the type Databricks declares for them (see output_types), and compares the rows with the source's answer.
 - round_output {"columns": [..], "digits": d}: (queries only) reads the named output columns as DECIMAL(38, d) on Zetaris, the precision the source declares, and compares the rows with the source's answer.
 - try_rewrite {}: (queries only) put the full rewritten Spark SQL in a ```sql block AFTER the JSON object, never inside it. Nirvana runs it on Zetaris and compares its rows with the source's answer.
 - finish {"summary": s}: stop. Only findings proven by a tool count.
@@ -97,6 +98,12 @@ class Investigation:
 
 
 # ------------------------------------------------------------------ helpers
+
+
+def is_unavailable(e: Exception) -> bool:
+    """A model error that retrying in this investigation cannot fix (quota, auth)."""
+    t = str(e).lower()
+    return any(k in t for k in ("429", "rate limit", "quota", "refused the token", "401", "403"))
 
 
 def parse_action(text: str) -> dict[str, Any]:
@@ -181,6 +188,7 @@ class Agent:
         self.source_location = source_location
         self.memory, self.clock, self.on_step, self.max_steps = memory, clock, on_step, max_steps
         self._views: set[str] = set()
+        self.fallback_model: str | None = None
 
     # ---------------------------------------------------------------- entry points
 
@@ -213,11 +221,12 @@ class Agent:
             "target_sql": judgement.get("target_sql"),
             "status": cmp.get("status"),
             "mismatched_columns": cmp.get("mismatched_columns", [])[:12],
-            "type_mismatches": cmp.get("type_mismatches", [])[:12],
+            "type_mismatches": len(cmp.get("type_mismatches", [])),
             "source_rows": cmp.get("source_rows"),
             "target_rows": cmp.get("target_rows"),
             "sample": (judgement.get("sample") or {}).get("paired", [])[:2],
             "max_rel_gap": cmp.get("max_rel_gap"),
+            "output_types": {t["name"]: t["source"] for t in cmp.get("type_mismatches", []) if t.get("name")},
             "drift": judgement.get("drift") or {},
         }
         inv.open_columns = ["answer"]
@@ -264,12 +273,15 @@ class Agent:
                     break
                 t0 = time.perf_counter()
                 try:
-                    reply = self.provider.complete(SYSTEM, self._prompt(inv))
+                    reply = self._complete(self._prompt(inv))
                     action = parse_action(reply)
                 except Exception as e:
                     step = Step(n, "model", {}, "", {"error": f"no usable action: {e}"}, ok=False, model_ms=(time.perf_counter() - t0) * 1000)
                     inv.steps.append(step)
                     self._emit(inv)
+                    if is_unavailable(e) or sum(1 for x in inv.steps[-3:] if x.tool == "model" and not x.ok) >= 3:
+                        inv.summary = "stopped: the model route is unavailable (" + str(e)[:120] + ")"
+                        break
                     continue
                 model_ms = (time.perf_counter() - t0) * 1000
                 key = action["tool"] + json.dumps(action["args"], sort_keys=True)
@@ -301,6 +313,21 @@ class Agent:
         self._emit(inv)
         return inv
 
+    def _complete(self, prompt: str) -> str:
+        """One model call; a failed call is retried once on the fallback model, if any."""
+        try:
+            return self.provider.complete(SYSTEM, prompt)
+        except Exception:
+            fb = getattr(self, "fallback_model", None)
+            if not fb or getattr(self.provider, "model", None) in (None, fb):
+                raise
+            main = self.provider.model
+            self.provider.model = fb
+            try:
+                return self.provider.complete(SYSTEM, prompt)
+            finally:
+                self.provider.model = main
+
     def _all_explained(self, inv: Investigation) -> bool:
         done = {f.column for f in inv.findings if f.kind in ("same_values", "repair")}
         return all(c in done for c in inv.open_columns)
@@ -316,6 +343,8 @@ class Agent:
             return self.try_rewrite(inv, str(args.get("sql", "")))
         if inv.kind == "query" and tool == "apply_rule":
             return self.apply_rule(inv, str(args.get("rule", "")))
+        if inv.kind == "query" and tool == "cast_output":
+            return self.cast_output(inv, args.get("columns") or [])
         if inv.kind == "query" and tool == "round_output":
             return self.round_output(inv, args.get("columns") or [], args.get("digits", 2))
         if inv.kind == "query" and tool in ("profile_column", "compare_column", "verify_repair", "install_guard"):
@@ -423,6 +452,36 @@ class Agent:
         if not new:
             raise ValueError(f"{rule} does not change this query")
         out = self.try_rewrite(inv, new, label=f"rule {rule}")
+        return out
+
+    def cast_output(self, inv: Investigation, columns: list[Any]) -> dict[str, Any]:
+        types: dict[str, str] = {k.lower(): v for k, v in (inv.context.get("output_types") or {}).items()}
+        want = {ident(str(c)).lower() for c in columns} or set(types)
+        unknown = sorted(want - set(types))
+        if unknown:
+            raise ValueError(f"no declared source type for {unknown}; output_types lists the columns whose type differs")
+        tree = sqlglot.parse_one(inv.context["target_sql"], read="spark")
+        select = tree if isinstance(tree, exp.Select) else tree.find(exp.Select)
+        if select is None:
+            raise ValueError("no top-level SELECT")
+        done = []
+        for i, e in enumerate(list(select.expressions)):
+            name = e.alias_or_name.lower()
+            if name not in want:
+                continue
+            inner = e.this if isinstance(e, exp.Alias) else e
+            dt = exp.DataType.build(types[name], dialect="spark")
+            scale = None
+            m = re.match(r"(?i)decimal\(\s*\d+\s*,\s*(\d+)\s*\)", types[name])
+            if m:
+                scale = int(m.group(1))
+            value = exp.Round(this=inner.copy(), decimals=exp.Literal.number(scale)) if scale is not None else inner.copy()
+            select.expressions[i] = exp.alias_(exp.Cast(this=value, to=dt), e.alias_or_name)
+            done.append(name)
+        if not done:
+            raise ValueError("none of those is an output column of the top-level SELECT")
+        out = self.try_rewrite(inv, tree.sql(dialect="spark"), label=f"outputs read at the source's declared types ({len(done)} columns)")
+        out["cast"] = done
         return out
 
     def round_output(self, inv: Investigation, columns: list[Any], digits: Any) -> dict[str, Any]:
