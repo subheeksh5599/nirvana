@@ -33,6 +33,7 @@ from .engines import Engine, build
 from .federate import DiffStore, row_diff
 from .guard import GuardStore, build_guard
 from .investigate import Agent, InvestigationStore
+from .audit import Auditor, AuditStore
 from .ledger import Ledger
 from .runner import Run, load_recordings
 
@@ -58,6 +59,7 @@ class DiffRequest(BaseModel):
 class GuardRequest(BaseModel):
     table: str = Field(..., description="a TPC-DS table name")
     candidate: str = Field(..., description="the Zetaris database holding the migrated copy")
+    columns: list[str] | None = Field(None, description="only these columns; every column when omitted")
     sample: int = Field(5, ge=0, le=50)
 
 
@@ -65,6 +67,11 @@ class InvestigateRequest(BaseModel):
     run_id: str = Field(..., description="the run whose blocked table or kept query to investigate")
     table: str | None = Field(None, description="a table the run's alignment blocked")
     query_id: str | None = Field(None, description="a query the run kept on the source")
+
+
+class AuditRequest(BaseModel):
+    target_location: str = Field(..., description="the Zetaris database to audit")
+    queries: list[str] | None = Field(None, description="query ids; all 103 when omitted")
 
 
 class State:
@@ -344,6 +351,9 @@ def create_app(s: Settings | None = None, mode: str | None = None) -> FastAPI:
             investigations.put(inv)
 
         agent = Agent(provider, src, z, source_location=s.source_location, memory=state.memory(), on_step=emit)
+        _, pst = state.provider()
+        fallbacks = [m for m in (pst.models if pst else ()) if "nemotron" in m.lower() and m.endswith(":free") and m != provider.model and "safety" not in m and "embed" not in m]
+        agent.fallback_model = fallbacks[0] if fallbacks else None
 
         def work():
             if req.table:
@@ -357,6 +367,60 @@ def create_app(s: Settings | None = None, mode: str | None = None) -> FastAPI:
                 break
             time.sleep(0.05)
         return {"id": first.get("id"), "run_id": req.run_id, "table": req.table, "query_id": req.query_id, "candidate": candidate}
+
+    audits = AuditStore(s.recordings_dir / "audits.jsonl")
+
+    def _audit_run(queries: list[str] | None, explained_by: list[str], target: str) -> str:
+        r = start_run(RunRequest(engines="live", queries=queries, target_location=target, use_model=False, explained_by=explained_by or None))
+        run = state.runs[r["id"]]
+        if run.thread:
+            run.thread.join()
+        return r["id"]
+
+    def _audit_investigate(run_id: str, table: str | None, query_id: str | None) -> dict[str, Any]:
+        r = start_investigation(InvestigateRequest(run_id=run_id, table=table, query_id=query_id))
+        while True:
+            inv = investigations.get(r["id"])
+            if inv and inv["status"] != "running":
+                return inv
+            time.sleep(1)
+
+    @app.get("/api/audits")
+    def list_audits():
+        return audits.all()
+
+    @app.get("/api/audits/{audit_id}")
+    def get_audit(audit_id: str):
+        a = audits.get(audit_id)
+        if a is None:
+            raise HTTPException(404, f"no audit {audit_id}")
+        return a
+
+    @app.post("/api/audits", status_code=202)
+    def start_audit(req: AuditRequest):
+        if state.mode != "live":
+            raise HTTPException(409, "this server only serves recorded results")
+        if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", req.target_location):
+            raise HTTPException(400, "target_location must be a plain database name")
+        if any(a.get("status") == "running" for a in audits.all()):
+            raise HTTPException(409, "an audit is still running")
+        if req.queries:
+            try:
+                wl.select(req.queries)
+            except KeyError as e:
+                raise HTTPException(400, str(e))
+        target = req.target_location
+        auditor = Auditor(
+            run_queries=lambda q, ex: _audit_run(q, ex, target),
+            run_record=lambda rid: state.ledger.run(rid),
+            alignment=lambda rid: state.ledger.alignment(rid),
+            judgements=lambda rid: state.ledger.judgements(rid),
+            investigate=_audit_investigate,
+            guard=lambda t, c: run_guard(GuardRequest(table=t, candidate=target, columns=[c])),
+            store=audits,
+        )
+        a = auditor.start(target, req.queries)
+        return {"id": a.id, "target_location": target}
 
     diffs = DiffStore(s.recordings_dir / "row-diffs.jsonl")
 
@@ -396,7 +460,7 @@ def create_app(s: Settings | None = None, mode: str | None = None) -> FastAPI:
             src, z = build(s.source, s, role="source"), build("zetaris", s, role="target")
         except ValueError as e:
             raise HTTPException(400, f"engines not configured: {e}")
-        g = build_guard(src, f"{s.source_location}.{req.table}", z, req.table, req.candidate, sample=req.sample)
+        g = build_guard(src, f"{s.source_location}.{req.table}", z, req.table, req.candidate, sample=req.sample, columns=req.columns)
         if g.error and g.error.startswith("not a plain identifier"):
             raise HTTPException(400, g.error)
         guards.save(g)
