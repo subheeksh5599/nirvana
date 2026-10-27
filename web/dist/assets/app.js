@@ -91,7 +91,13 @@ function verdictBar(counts, total) {
 async function latestRun() {
   const runs = await api("/runs");
   state.runs = runs;
-  const done = runs.find((r) => r.status === "done" && r.mode !== "rehearsal") || runs.find((r) => r.status === "done");
+  // The headline is the newest finished run of the whole workload; a short run (a few
+  // queries picked by hand) only stands in when no full run exists.
+  const finished = runs.filter((r) => r.status === "done" && r.summary);
+  const live = finished.filter((r) => r.mode !== "rehearsal");
+  const pool = live.length ? live : finished;
+  const most = Math.max(0, ...pool.map((r) => r.summary.queries));
+  const done = pool.find((r) => r.summary.queries === most) || null;
   return { runs, done };
 }
 
@@ -176,7 +182,7 @@ async function landing() {
   const v = summary.verdicts || {};
   board.innerHTML = `
     <div class="board-head">
-      <div><h3>Latest run</h3><div class="note">${esc(run.source.name)} to ${esc(run.target.name)}${run.mode === "rehearsal" ? ", local rehearsal" : ""}${run.recorded ? ", recorded" : ""}, ${esc(when(run.finished_at))}</div></div>
+      <div><h3>Latest run</h3><div class="note">${esc(engineLabel(run, "source"))} to ${esc(engineLabel(run, "target"))}${run.mode === "rehearsal" ? ", local rehearsal" : ""}${run.recorded ? ", recorded" : ""}, ${esc(when(run.finished_at))}</div></div>
       <div class="big">${summary.movable}<small> of ${summary.queries} queries can move</small></div>
     </div>
     ${verdictBar(v, summary.queries)}
@@ -317,7 +323,7 @@ async function paneOverview() {
     const el = document.getElementById("latest");
     if (!done) { el.innerHTML = `<div class="note">No finished run yet.</div>`; return; }
     const s = done.summary;
-    document.getElementById("latest-sub").textContent = `${done.source.name} to ${done.target.name}, ${when(done.finished_at)}`;
+    document.getElementById("latest-sub").textContent = `${engineLabel(done, "source")} to ${engineLabel(done, "target")}, ${when(done.finished_at)}`;
     el.innerHTML = `<div class="board-head" style="margin:0"><div class="big">${s.movable}<small> of ${s.queries} queries can move</small></div><a class="btn small" href="/app/queries?run=${encodeURIComponent(done.id)}" data-nav>Open results</a></div>${verdictBar(s.verdicts, s.queries)}`;
   } catch (e) {
     document.getElementById("latest").innerHTML = `<div class="error">${esc(e.message)}</div>`;
@@ -350,7 +356,7 @@ async function paneRun() {
   if (!run) { pane.innerHTML = noRun; return; }
   const total = run.query_ids.length;
   pane.innerHTML = `
-    <div class="panel"><div class="panel-head"><div><h2 class="mono">${esc(run.id)}</h2><div class="sub">${esc(run.source.name)} to ${esc(run.target.name)}${run.mode === "rehearsal" ? ", local rehearsal" : ""}</div></div>
+    <div class="panel"><div class="panel-head"><div><h2 class="mono">${esc(run.id)}</h2><div class="sub">${esc(engineLabel(run, "source"))} to ${esc(engineLabel(run, "target"))}${run.mode === "rehearsal" ? ", local rehearsal" : ""}</div></div>
       <div style="display:flex;gap:10px;align-items:center"><span class="tag" id="run-status"></span><button class="btn small" id="cancel" hidden>Cancel</button></div></div>
       <div class="panel-body"><div class="progress"><span id="prog" style="width:0%"></span></div><div class="note" style="margin-top:8px" id="prog-text"></div><div id="run-summary"></div></div></div>
     <div class="panel"><div class="panel-head"><h2>Step 1. Source alignment</h2><span class="sub" id="align-sub"></span></div><div class="panel-body"><div class="tiles" id="tiles"></div></div></div>
@@ -593,7 +599,7 @@ async function paneHistory() {
   const runs = await api("/runs");
   state.runs = runs;
   pane.innerHTML = `<div class="panel"><div class="panel-head"><h2>${runs.length} runs</h2></div>${runs.length ? `<div class="scroll"><table class="t"><thead><tr><th>Run</th><th>When</th><th>Engines</th><th>Status</th><th class="num">Can move</th></tr></thead><tbody>
-    ${runs.map((r) => `<tr class="click" data-r="${r.id}"><td class="mono">${esc(r.id)}${r.recorded ? ` <span class="tag v-blocked">recorded</span>` : ""}</td><td>${esc(when(r.created_at))}</td><td>${esc(r.source.name)} to ${esc(r.target.name)}</td><td>${esc(r.status)}</td><td class="num">${r.summary ? `${r.summary.movable} / ${r.summary.queries}` : ""}</td></tr>`).join("")}
+    ${runs.map((r) => `<tr class="click" data-r="${r.id}"><td class="mono">${esc(r.id)}${r.recorded ? ` <span class="tag v-blocked">recorded</span>` : ""}</td><td>${esc(when(r.created_at))}</td><td>${esc(engineLabel(r, "source"))} to ${esc(engineLabel(r, "target"))}</td><td>${esc(r.status)}</td><td class="num">${r.summary ? `${r.summary.movable} / ${r.summary.queries}` : ""}</td></tr>`).join("")}
   </tbody></table></div>` : `<div class="empty">No runs yet.</div>`}</div>`;
   pane.querySelectorAll("tr.click").forEach((tr) => tr.addEventListener("click", () => { setRun(tr.dataset.r); navigate(`/app/queries?run=${encodeURIComponent(tr.dataset.r)}`); }));
 }
