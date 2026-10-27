@@ -2,8 +2,9 @@
 
 A query diff is only meaningful when the tables under it match. For every workload table
 both engines run one profile statement: row count, and per column the non-null count, MIN,
-MAX, and an exact SUM (numbers cast to DECIMAL(38,6) so a DECIMAL column on one side and a
-DOUBLE column holding the same values on the other still compare exactly) or the summed
+MAX, and an exact SUM (numbers cast to DECIMAL(38, s) where s is the scale the source declares, so a DECIMAL(7,2)
+column on one side and a DOUBLE or REAL column holding the same cents on the other still
+compare exactly) or the summed
 length (text). A table is
 
 * ``aligned``        - every profile value equal and every column the same type family
@@ -21,7 +22,7 @@ from typing import Any
 from .canon import token
 from .compare import numeric_gap
 from .engines import Engine
-from .model import Column, EngineError
+from .model import Column, EngineError, decimal_scale
 from .workload import split_location
 
 NUMERIC = ("integer", "decimal", "float")
@@ -30,6 +31,17 @@ NUMERIC = ("integer", "decimal", "float")
 def table_ref(location: str, table: str) -> str:
     catalog, schema = split_location(location)
     return f"{catalog}.{schema}.{table}" if catalog else f"{schema}.{table}"
+
+
+def measure_scale(c: Column) -> int:
+    """Digits after the point at which a numeric column is measured: the source's declared
+    scale for DECIMAL, 0 for integers, 6 for floating point."""
+    if c.family == "integer":
+        return 0
+    if c.family == "decimal":
+        s = decimal_scale(c.type)
+        return 6 if s is None else s
+    return 6
 
 
 def profile_sql(ref: str, columns: list[Column]) -> tuple[str, list[str]]:
@@ -42,11 +54,12 @@ def profile_sql(ref: str, columns: list[Column]) -> tuple[str, list[str]]:
         measures.append(f"{c.name}.nonnull")
         fam = c.family
         if fam in NUMERIC:
-            parts.append(f"SUM(CAST({q} AS DECIMAL(38,6))) AS c{i}_sum")
+            dec = f"DECIMAL(38,{measure_scale(c)})"
+            parts.append(f"SUM(CAST({q} AS {dec})) AS c{i}_sum")
             measures.append(f"{c.name}.sum")
-            parts.append(f"MIN(CAST({q} AS DECIMAL(38,6))) AS c{i}_min")
+            parts.append(f"MIN(CAST({q} AS {dec})) AS c{i}_min")
             measures.append(f"{c.name}.min")
-            parts.append(f"MAX(CAST({q} AS DECIMAL(38,6))) AS c{i}_max")
+            parts.append(f"MAX(CAST({q} AS {dec})) AS c{i}_max")
             measures.append(f"{c.name}.max")
         elif fam == "string":
             parts.append(f"SUM(LENGTH({q})) AS c{i}_len")

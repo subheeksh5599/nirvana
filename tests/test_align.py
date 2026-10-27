@@ -34,7 +34,7 @@ def test_profile_sql_measures():
         "rows", "a.nonnull", "a.sum", "a.min", "a.max", "b.nonnull", "b.length", "b.min", "b.max", "c.nonnull", "c.min", "c.max", "d.nonnull",
     ]
     assert sql.startswith("SELECT COUNT(*) AS n_rows") and sql.endswith("FROM s.t")
-    assert "CAST(`a` AS DECIMAL(38,6))" in sql
+    assert "CAST(`a` AS DECIMAL(38,0))" in sql
 
 
 @pytest.mark.parametrize("table", sorted(TPCDS_TABLES))
@@ -99,3 +99,18 @@ def test_as_dict_round_trip(pair):
     d = align_table(*pair, "item").as_dict()
     assert d["table"] == "item" and d["status"] in ("aligned", "aligned_types")
     assert "SELECT COUNT(*)" in d["source_sql"]
+
+
+@pytest.mark.parametrize("typ,scale", [("int", 0), ("bigint", 0), ("decimal(7,2)", 2), ("decimal(15,4)", 4), ("decimal", 6), ("double", 6), ("real", 6)])
+def test_measure_scale(typ, scale):
+    from nirvana.align import measure_scale
+
+    assert measure_scale(Column("x", typ)) == scale
+
+
+def test_single_precision_copy_still_aligns_at_source_scale():
+    src = DuckDBEngine.tpcds("f32-source", 0.01)
+    tgt = src.clone_with_types("f32-target", decimal_as="REAL", schema="f32")
+    a = align_table(src, tgt, "store_sales")
+    assert a.usable, a.differences
+    assert all(c["target"] == "float" for c in a.type_changes)

@@ -34,6 +34,9 @@ class DuckDBEngine(Engine):
         super().__init__(location)
         self.name = name
         self.read_dialect = read_dialect
+        # Text read as Spark is translated with Spark's NULL placement; raw DuckDB text sorts
+        # NULLs last in both directions unless the session says otherwise.
+        self.null_order = "spark" if read_dialect == "spark" else "last"
         self.con = connection or duckdb.connect(database)
         self._lock = threading.Lock()
 

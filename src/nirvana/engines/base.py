@@ -21,6 +21,9 @@ class EngineStatus:
 class Engine(ABC):
     name: str = "engine"
     dialect: str = "spark"
+    # Where NULLs sort when ORDER BY does not say: "spark" = first ascending, last descending
+    # (Spark, Databricks, Zetaris Lightning); "last" = last in both directions (DuckDB).
+    null_order: str = "spark"
 
     def __init__(self, location: str) -> None:
         self.location = location
