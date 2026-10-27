@@ -309,6 +309,8 @@ class Judge:
                 if self.memory is not None and feats:
                     self.memory.remember(feats, "+".join(plan), j.query_id)
                 return self._done(j, "rewrite", cause, "the target returns the source's exact answer after: " + ", ".join(rw.CATALOGUE[p].describe for p in plan))
+        if self.memory is not None and feats and hasattr(self.memory, "forget_failed"):
+            self.memory.forget_failed()
         return None
 
     def _try_advisor(self, j, src: ResultSet, t_sql: str, ordered: bool, cmp: Comparison | None, target_error: str | None, steps: list[Step]):
