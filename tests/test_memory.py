@@ -91,3 +91,21 @@ def test_judge_with_real_memory(tmp_path):
         assert m.stats()["memories"] == 2
     finally:
         m.close()
+
+
+def test_order_ties_proof_is_known_only_for_the_same_features(mem):
+    mem.remember(["status:order_only"], "proof:order_ties", "q6")
+    assert mem.knows(["status:order_only"], "proof:order_ties") is True
+    assert mem.knows(["status:different", "has_division"], "proof:order_ties") is False
+    assert mem.knows([], "proof:order_ties") is False
+
+
+def test_a_proof_is_never_recalled_as_a_rewrite(mem):
+    mem.remember(["status:order_only"], "proof:order_ties", "q6")
+    assert mem.recall(["status:order_only"]) == []
+
+
+def test_proof_memory_reads_as_a_sentence(mem):
+    mem.remember(["status:order_only"], "proof:order_ties", "q77")
+    hits = mem.search("order ties")
+    assert any("order ties proven" in h["content"] and "q77" in h["content"] for h in hits)

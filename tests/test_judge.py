@@ -334,3 +334,50 @@ def test_truncated_identical_answer_is_not_a_plain_move(source, same):
     j = Judge(source, same, max_rows=5).judge(q("SELECT i_item_sk FROM item ORDER BY i_item_sk"))
     assert j.verdict == "move_note" and j.cause == "truncated"
     assert "first 5 rows" in j.note
+
+
+# ----------------------------------------------------------------- memory of order-tie proofs
+
+TIES = "SELECT i_category, i_item_sk FROM item WHERE i_category IS NOT NULL ORDER BY i_category"
+
+
+class ProofMemory(ListMemory):
+    def __init__(self, known=False):
+        super().__init__()
+        self.known, self.asked = known, []
+
+    def knows(self, feats, proof):
+        self.asked.append((tuple(feats), proof))
+        return self.known
+
+
+def test_order_ties_proof_is_remembered(source, shuffled):
+    from nirvana.judge import ORDER_TIES_PROOF
+
+    mem = ProofMemory()
+    j = Judge(source, shuffled, memory=mem).judge(q(TIES, "t1"))
+    assert j.verdict == "move_note" and j.cause == "order_ties", j.note
+    assert mem.saved == [(("status:order_only",), ORDER_TIES_PROOF, "t1")]
+    assert any(s.name == "rewrite: explicit_null_order" for s in j.steps)
+
+
+def test_known_order_ties_skip_the_rewrite_run(source, shuffled):
+    mem = ProofMemory(known=True)
+    j = Judge(source, shuffled, memory=mem).judge(q(TIES))
+    assert j.verdict == "move_note" and j.cause == "order_ties" and "recalled from memory" in j.note
+    assert not any(s.name.startswith("rewrite") for s in j.steps)
+    assert [s.name for s in j.steps] == ["source", "target", "memory"]
+    assert mem.saved == []
+
+
+def test_memory_without_knows_still_proves_order_ties(source, shuffled):
+    j = Judge(source, shuffled, memory=ListMemory()).judge(q(TIES))
+    assert j.cause == "order_ties" and any(s.name == "rewrite: explicit_null_order" for s in j.steps)
+
+
+def test_null_ordering_is_never_skipped_by_an_order_ties_memory(source, rawduck):
+    sql = "SELECT ca_state, count(*) AS n FROM customer_address GROUP BY ca_state ORDER BY ca_state"
+    mem = ProofMemory(known=False)
+    j = Judge(source, rawduck, memory=mem).judge(q(sql))
+    assert j.verdict == "rewrite" and j.cause == "null_ordering"
+    assert mem.saved == []

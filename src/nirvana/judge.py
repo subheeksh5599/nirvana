@@ -113,6 +113,11 @@ def has_division(sql: str) -> bool:
         return False
 
 
+# What the judge writes to memory when a same-rows, different-order answer was not changed
+# by an explicit NULL order: the next query with the same features skips that execution.
+ORDER_TIES_PROOF = "proof:order_ties"
+
+
 def features(cmp: Comparison | None, target_sql: str, target_error: str | None, drift: dict[str, str]) -> list[str]:
     """Plain facts about a difference, used to recall which rewrite fixed a similar one."""
     f = []
@@ -221,9 +226,16 @@ class Judge:
             if cmp.status == "float_noise":
                 return self._done(j, "move_note", "float_noise", f"floating-point differences only, largest relative gap {cmp.max_rel_gap:.2e}")
             if cmp.status == "order_only":
+                feats = features(cmp, t_sql, None, drift)
+                knows = getattr(self.memory, "knows", None)
+                if knows is not None and feats and knows(feats, ORDER_TIES_PROOF):
+                    steps.append(Step("memory", "h-mem", True, "recalled: an explicit NULL order did not change this kind of difference before, so it was not re-run"))
+                    return self._done(j, "move_note", "order_ties", "same rows; the order differs only where the ORDER BY does not decide it (recalled from memory)")
                 proven = self._try_rewrites(j, src, t_sql, ordered, ["explicit_null_order"], drift, steps, [])
                 if proven:
                     return proven
+                if self.memory is not None and feats:
+                    self.memory.remember(feats, ORDER_TIES_PROOF, j.query_id)
                 return self._done(j, "move_note", "order_ties", "same rows; the order differs only where the ORDER BY does not decide it")
 
         feats = features(cmp, t_sql, target_error, drift)

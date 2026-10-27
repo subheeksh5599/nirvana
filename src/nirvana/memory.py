@@ -69,7 +69,10 @@ class HMemMemory:
     # -- the judge's Memory protocol ------------------------------------------------
 
     def remember(self, features: list[str], rewrite: str, query_id: str) -> None:
-        content = f"rewrite {rewrite} proved the cause of a difference with {', '.join(features)} (query {query_id})"
+        if rewrite.startswith("proof:"):
+            content = f"{rewrite.split(':', 1)[1].replace('_', ' ')} proven for a difference with {', '.join(features)} (query {query_id})"
+        else:
+            content = f"rewrite {rewrite} proved the cause of a difference with {', '.join(features)} (query {query_id})"
         tags = [f"rewrite:{rewrite}", f"query:{query_id}", *features]
         self._call("add", content=content, tags=tags, source="nirvana-judge", confidence=0.9)
         for mid in self._recalled.pop(rewrite, []):
@@ -83,12 +86,25 @@ class HMemMemory:
         self._recalled = {}
         for m in res.get("memories", []):
             for t in m.get("tags", []):
-                if t.startswith("rewrite:"):
+                if t.startswith("rewrite:") and not t.startswith("rewrite:proof:"):
                     name = t.split(":", 1)[1]
                     self._recalled.setdefault(name, []).append(m["id"])
                     if name not in order:
                         order.append(name)
         return order
+
+    def knows(self, features: list[str], proof: str) -> bool:
+        """True when a stored memory names this proof for exactly these features."""
+        if not features:
+            return False
+        res = self._call("query", text=" ".join(features), topN=8, threshold=self.threshold)
+        want = set(features)
+        for m in res.get("memories", []):
+            tags = set(m.get("tags", []))
+            if f"rewrite:{proof}" in tags and want <= tags and not any(t.startswith("status:") and t not in want for t in tags):
+                self._call("feedback", memoryId=m["id"], kind="helpful")
+                return True
+        return False
 
     def forget_failed(self) -> None:
         """Recalled fixes that were tried and did not prove the cause lose trust."""
