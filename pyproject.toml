@@ -25,3 +25,10 @@ dev = [
     "hypothesis>=6.170.12",
     "pytest>=9.1.1",
 ]
+
+[project.scripts]
+nirvana = "nirvana.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning:fastapi.testclient", "ignore:Using `httpx` with `starlette.testclient`"]
