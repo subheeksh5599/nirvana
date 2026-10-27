@@ -1,0 +1,762 @@
+{
+ "alignment": [
+  {
+   "differences": [],
+   "error": null,
+   "source_rows": 73049,
+   "source_sql": "SELECT COUNT(*) AS n_rows, COUNT(`d_date_sk`) AS c0_nonnull, SUM(CAST(`d_date_sk` AS DECIMAL(38,0))) AS c0_sum, MIN(CAST(`d_date_sk` AS DECIMAL(38,0))) AS c0_min, MAX(CAST(`d_date_sk` AS DECIMAL(38,0))) AS c0_max, COUNT(`d_date_id`) AS c1_nonnull, SUM(LENGTH(`d_date_id`)) AS c1_len, MIN(`d_date_id`) AS c1_min, MAX(`d_date_id`) AS c1_max, COUNT(`d_date`) AS c2_nonnull, MIN(`d_date`) AS c2_min, MAX(`d_date`) AS c2_max, COUNT(`d_month_seq`) AS c3_nonnull, SUM(CAST(`d_month_seq` AS DECIMAL(38,0))) AS c3_sum, MIN(CAST(`d_month_seq` AS DECIMAL(38,0))) AS c3_min, MAX(CAST(`d_month_seq` AS DECIMAL(38,0))) AS c3_max, COUNT(`d_week_seq`) AS c4_nonnull, SUM(CAST(`d_week_seq` AS DECIMAL(38,0))) AS c4_sum, MIN(CAST(`d_week_seq` AS DECIMAL(38,0))) AS c4_min, MAX(CAST(`d_week_seq` AS DECIMAL(38,0))) AS c4_max, COUNT(`d_quarter_seq`) AS c5_nonnull, SUM(CAST(`d_quarter_seq` AS DECIMAL(38,0))) AS c5_sum, MIN(CAST(`d_quarter_seq` AS DECIMAL(38,0))) AS c5_min, MAX(CAST(`d_quarter_seq` AS DECIMAL(38,0))) AS c5_max, COUNT(`d_year`) AS c6_nonnull, SUM(CAST(`d_year` AS DECIMAL(38,0))) AS c6_sum, MIN(CAST(`d_year` AS DECIMAL(38,0))) AS c6_min, MAX(CAST(`d_year` AS DECIMAL(38,0))) AS c6_max, COUNT(`d_dow`) AS c7_nonnull, SUM(CAST(`d_dow` AS DECIMAL(38,0))) AS c7_sum, MIN(CAST(`d_dow` AS DECIMAL(38,0))) AS c7_min, MAX(CAST(`d_dow` AS DECIMAL(38,0))) AS c7_max, COUNT(`d_moy`) AS c8_nonnull, SUM(CAST(`d_moy` AS DECIMAL(38,0))) AS c8_sum, MIN(CAST(`d_moy` AS DECIMAL(38,0))) AS c8_min, MAX(CAST(`d_moy` AS DECIMAL(38,0))) AS c8_max, COUNT(`d_dom`) AS c9_nonnull, SUM(CAST(`d_dom` AS DECIMAL(38,0))) AS c9_sum, MIN(CAST(`d_dom` AS DECIMAL(38,0))) AS c9_min, MAX(CAST(`d_dom` AS DECIMAL(38,0))) AS c9_max, COUNT(`d_qoy`) AS c10_nonnull, SUM(CAST(`d_qoy` AS DECIMAL(38,0))) AS c10_sum, MIN(CAST(`d_qoy` AS DECIMAL(38,0))) AS c10_min, MAX(CAST(`d_qoy` AS DECIMAL(38,0))) AS c10_max, COUNT(`d_fy_year`) AS c11_nonnull, SUM(CAST(`d_fy_year` AS DECIMAL(38,0))) AS c11_sum, MIN(CAST(`d_fy_year` AS DECIMAL(38,0))) AS c11_min, MAX(CAST(`d_fy_year` AS DECIMAL(38,0))) AS c11_max, COUNT(`d_fy_quarter_seq`) AS c12_nonnull, SUM(CAST(`d_fy_quarter_seq` AS DECIMAL(38,0))) AS c12_sum, MIN(CAST(`d_fy_quarter_seq` AS DECIMAL(38,0))) AS c12_min, MAX(CAST(`d_fy_quarter_seq` AS DECIMAL(38,0))) AS c12_max, COUNT(`d_fy_week_seq`) AS c13_nonnull, SUM(CAST(`d_fy_week_seq` AS DECIMAL(38,0))) AS c13_sum, MIN(CAST(`d_fy_week_seq` AS DECIMAL(38,0))) AS c13_min, MAX(CAST(`d_fy_week_seq` AS DECIMAL(38,0))) AS c13_max, COUNT(`d_day_name`) AS c14_nonnull, SUM(LENGTH(`d_day_name`)) AS c14_len, MIN(`d_day_name`) AS c14_min, MAX(`d_day_name`) AS c14_max, COUNT(`d_quarter_name`) AS c15_nonnull, SUM(LENGTH(`d_quarter_name`)) AS c15_len, MIN(`d_quarter_name`) AS c15_min, MAX(`d_quarter_name`) AS c15_max, COUNT(`d_holiday`) AS c16_nonnull, SUM(LENGTH(`d_holiday`)) AS c16_len, MIN(`d_holiday`) AS c16_min, MAX(`d_holiday`) AS c16_max, COUNT(`d_weekend`) AS c17_nonnull, SUM(LENGTH(`d_weekend`)) AS c17_len, MIN(`d_weekend`) AS c17_min, MAX(`d_weekend`) AS c17_max, COUNT(`d_following_holiday`) AS c18_nonnull, SUM(LENGTH(`d_following_holiday`)) AS c18_len, MIN(`d_following_holiday`) AS c18_min, MAX(`d_following_holiday`) AS c18_max, COUNT(`d_first_dom`) AS c19_nonnull, SUM(CAST(`d_first_dom` AS DECIMAL(38,0))) AS c19_sum, MIN(CAST(`d_first_dom` AS DECIMAL(38,0))) AS c19_min, MAX(CAST(`d_first_dom` AS DECIMAL(38,0))) AS c19_max, COUNT(`d_last_dom`) AS c20_nonnull, SUM(CAST(`d_last_dom` AS DECIMAL(38,0))) AS c20_sum, MIN(CAST(`d_last_dom` AS DECIMAL(38,0))) AS c20_min, MAX(CAST(`d_last_dom` AS DECIMAL(38,0))) AS c20_max, COUNT(`d_same_day_ly`) AS c21_nonnull, SUM(CAST(`d_same_day_ly` AS DECIMAL(38,0))) AS c21_sum, MIN(CAST(`d_same_day_ly` AS DECIMAL(38,0))) AS c21_min, MAX(CAST(`d_same_day_ly` AS DECIMAL(38,0))) AS c21_max, COUNT(`d_same_day_lq`) AS c22_nonnull, SUM(CAST(`d_same_day_lq` AS DECIMAL(38,0))) AS c22_sum, MIN(CAST(`d_same_day_lq` AS DECIMAL(38,0))) AS c22_min, MAX(CAST(`d_same_day_lq` AS DECIMAL(38,0))) AS c22_max, COUNT(`d_current_day`) AS c23_nonnull, SUM(LENGTH(`d_current_day`)) AS c23_len, MIN(`d_current_day`) AS c23_min, MAX(`d_current_day`) AS c23_max, COUNT(`d_current_week`) AS c24_nonnull, SUM(LENGTH(`d_current_week`)) AS c24_len, MIN(`d_current_week`) AS c24_min, MAX(`d_current_week`) AS c24_max, COUNT(`d_current_month`) AS c25_nonnull, SUM(LENGTH(`d_current_month`)) AS c25_len, MIN(`d_current_month`) AS c25_min, MAX(`d_current_month`) AS c25_max, COUNT(`d_current_quarter`) AS c26_nonnull, SUM(LENGTH(`d_current_quarter`)) AS c26_len, MIN(`d_current_quarter`) AS c26_min, MAX(`d_current_quarter`) AS c26_max, COUNT(`d_current_year`) AS c27_nonnull, SUM(LENGTH(`d_current_year`)) AS c27_len, MIN(`d_current_year`) AS c27_min, MAX(`d_current_year`) AS c27_max FROM workspace.nirvana_tpcds.date_dim",
+   "status": "aligned",
+   "table": "date_dim",
+   "target_rows": 73049,
+   "target_sql": "SELECT COUNT(*) AS n_rows, COUNT(`d_date_sk`) AS c0_nonnull, SUM(CAST(`d_date_sk` AS DECIMAL(38,0))) AS c0_sum, MIN(CAST(`d_date_sk` AS DECIMAL(38,0))) AS c0_min, MAX(CAST(`d_date_sk` AS DECIMAL(38,0))) AS c0_max, COUNT(`d_date_id`) AS c1_nonnull, SUM(LENGTH(`d_date_id`)) AS c1_len, MIN(`d_date_id`) AS c1_min, MAX(`d_date_id`) AS c1_max, COUNT(`d_date`) AS c2_nonnull, MIN(`d_date`) AS c2_min, MAX(`d_date`) AS c2_max, COUNT(`d_month_seq`) AS c3_nonnull, SUM(CAST(`d_month_seq` AS DECIMAL(38,0))) AS c3_sum, MIN(CAST(`d_month_seq` AS DECIMAL(38,0))) AS c3_min, MAX(CAST(`d_month_seq` AS DECIMAL(38,0))) AS c3_max, COUNT(`d_week_seq`) AS c4_nonnull, SUM(CAST(`d_week_seq` AS DECIMAL(38,0))) AS c4_sum, MIN(CAST(`d_week_seq` AS DECIMAL(38,0))) AS c4_min, MAX(CAST(`d_week_seq` AS DECIMAL(38,0))) AS c4_max, COUNT(`d_quarter_seq`) AS c5_nonnull, SUM(CAST(`d_quarter_seq` AS DECIMAL(38,0))) AS c5_sum, MIN(CAST(`d_quarter_seq` AS DECIMAL(38,0))) AS c5_min, MAX(CAST(`d_quarter_seq` AS DECIMAL(38,0))) AS c5_max, COUNT(`d_year`) AS c6_nonnull, SUM(CAST(`d_year` AS DECIMAL(38,0))) AS c6_sum, MIN(CAST(`d_year` AS DECIMAL(38,0))) AS c6_min, MAX(CAST(`d_year` AS DECIMAL(38,0))) AS c6_max, COUNT(`d_dow`) AS c7_nonnull, SUM(CAST(`d_dow` AS DECIMAL(38,0))) AS c7_sum, MIN(CAST(`d_dow` AS DECIMAL(38,0))) AS c7_min, MAX(CAST(`d_dow` AS DECIMAL(38,0))) AS c7_max, COUNT(`d_moy`) AS c8_nonnull, SUM(CAST(`d_moy` AS DECIMAL(38,0))) AS c8_sum, MIN(CAST(`d_moy` AS DECIMAL(38,0))) AS c8_min, MAX(CAST(`d_moy` AS DECIMAL(38,0))) AS c8_max, COUNT(`d_dom`) AS c9_nonnull, SUM(CAST(`d_dom` AS DECIMAL(38,0))) AS c9_sum, MIN(CAST(`d_dom` AS DECIMAL(38,0))) AS c9_min, MAX(CAST(`d_dom` AS DECIMAL(38,0))) AS c9_max, COUNT(`d_qoy`) AS c10_nonnull, SUM(CAST(`d_qoy` AS DECIMAL(38,0))) AS c10_sum, MIN(CAST(`d_qoy` AS DECIMAL(38,0))) AS c10_min, MAX(CAST(`d_qoy` AS DECIMAL(38,0))) AS c10_max, COUNT(`d_fy_year`) AS c11_nonnull, SUM(CAST(`d_fy_year` AS DECIMAL(38,0))) AS c11_sum, MIN(CAST(`d_fy_year` AS DECIMAL(38,0))) AS c11_min, MAX(CAST(`d_fy_year` AS DECIMAL(38,0))) AS c11_max, COUNT(`d_fy_quarter_seq`) AS c12_nonnull, SUM(CAST(`d_fy_quarter_seq` AS DECIMAL(38,0))) AS c12_sum, MIN(CAST(`d_fy_quarter_seq` AS DECIMAL(38,0))) AS c12_min, MAX(CAST(`d_fy_quarter_seq` AS DECIMAL(38,0))) AS c12_max, COUNT(`d_fy_week_seq`) AS c13_nonnull, SUM(CAST(`d_fy_week_seq` AS DECIMAL(38,0))) AS c13_sum, MIN(CAST(`d_fy_week_seq` AS DECIMAL(38,0))) AS c13_min, MAX(CAST(`d_fy_week_seq` AS DECIMAL(38,0))) AS c13_max, COUNT(`d_day_name`) AS c14_nonnull, SUM(LENGTH(`d_day_name`)) AS c14_len, MIN(`d_day_name`) AS c14_min, MAX(`d_day_name`) AS c14_max, COUNT(`d_quarter_name`) AS c15_nonnull, SUM(LENGTH(`d_quarter_name`)) AS c15_len, MIN(`d_quarter_name`) AS c15_min, MAX(`d_quarter_name`) AS c15_max, COUNT(`d_holiday`) AS c16_nonnull, SUM(LENGTH(`d_holiday`)) AS c16_len, MIN(`d_holiday`) AS c16_min, MAX(`d_holiday`) AS c16_max, COUNT(`d_weekend`) AS c17_nonnull, SUM(LENGTH(`d_weekend`)) AS c17_len, MIN(`d_weekend`) AS c17_min, MAX(`d_weekend`) AS c17_max, COUNT(`d_following_holiday`) AS c18_nonnull, SUM(LENGTH(`d_following_holiday`)) AS c18_len, MIN(`d_following_holiday`) AS c18_min, MAX(`d_following_holiday`) AS c18_max, COUNT(`d_first_dom`) AS c19_nonnull, SUM(CAST(`d_first_dom` AS DECIMAL(38,0))) AS c19_sum, MIN(CAST(`d_first_dom` AS DECIMAL(38,0))) AS c19_min, MAX(CAST(`d_first_dom` AS DECIMAL(38,0))) AS c19_max, COUNT(`d_last_dom`) AS c20_nonnull, SUM(CAST(`d_last_dom` AS DECIMAL(38,0))) AS c20_sum, MIN(CAST(`d_last_dom` AS DECIMAL(38,0))) AS c20_min, MAX(CAST(`d_last_dom` AS DECIMAL(38,0))) AS c20_max, COUNT(`d_same_day_ly`) AS c21_nonnull, SUM(CAST(`d_same_day_ly` AS DECIMAL(38,0))) AS c21_sum, MIN(CAST(`d_same_day_ly` AS DECIMAL(38,0))) AS c21_min, MAX(CAST(`d_same_day_ly` AS DECIMAL(38,0))) AS c21_max, COUNT(`d_same_day_lq`) AS c22_nonnull, SUM(CAST(`d_same_day_lq` AS DECIMAL(38,0))) AS c22_sum, MIN(CAST(`d_same_day_lq` AS DECIMAL(38,0))) AS c22_min, MAX(CAST(`d_same_day_lq` AS DECIMAL(38,0))) AS c22_max, COUNT(`d_current_day`) AS c23_nonnull, SUM(LENGTH(`d_current_day`)) AS c23_len, MIN(`d_current_day`) AS c23_min, MAX(`d_current_day`) AS c23_max, COUNT(`d_current_week`) AS c24_nonnull, SUM(LENGTH(`d_current_week`)) AS c24_len, MIN(`d_current_week`) AS c24_min, MAX(`d_current_week`) AS c24_max, COUNT(`d_current_month`) AS c25_nonnull, SUM(LENGTH(`d_current_month`)) AS c25_len, MIN(`d_current_month`) AS c25_min, MAX(`d_current_month`) AS c25_max, COUNT(`d_current_quarter`) AS c26_nonnull, SUM(LENGTH(`d_current_quarter`)) AS c26_len, MIN(`d_current_quarter`) AS c26_min, MAX(`d_current_quarter`) AS c26_max, COUNT(`d_current_year`) AS c27_nonnull, SUM(LENGTH(`d_current_year`)) AS c27_len, MIN(`d_current_year`) AS c27_min, MAX(`d_current_year`) AS c27_max FROM NIRVANA_TPCDS.date_dim",
+   "type_changes": []
+  },
+  {
+   "differences": [],
+   "error": null,
+   "source_rows": 7200,
+   "source_sql": "SELECT COUNT(*) AS n_rows, COUNT(`hd_demo_sk`) AS c0_nonnull, SUM(CAST(`hd_demo_sk` AS DECIMAL(38,0))) AS c0_sum, MIN(CAST(`hd_demo_sk` AS DECIMAL(38,0))) AS c0_min, MAX(CAST(`hd_demo_sk` AS DECIMAL(38,0))) AS c0_max, COUNT(`hd_income_band_sk`) AS c1_nonnull, SUM(CAST(`hd_income_band_sk` AS DECIMAL(38,0))) AS c1_sum, MIN(CAST(`hd_income_band_sk` AS DECIMAL(38,0))) AS c1_min, MAX(CAST(`hd_income_band_sk` AS DECIMAL(38,0))) AS c1_max, COUNT(`hd_buy_potential`) AS c2_nonnull, SUM(LENGTH(`hd_buy_potential`)) AS c2_len, MIN(`hd_buy_potential`) AS c2_min, MAX(`hd_buy_potential`) AS c2_max, COUNT(`hd_dep_count`) AS c3_nonnull, SUM(CAST(`hd_dep_count` AS DECIMAL(38,0))) AS c3_sum, MIN(CAST(`hd_dep_count` AS DECIMAL(38,0))) AS c3_min, MAX(CAST(`hd_dep_count` AS DECIMAL(38,0))) AS c3_max, COUNT(`hd_vehicle_count`) AS c4_nonnull, SUM(CAST(`hd_vehicle_count` AS DECIMAL(38,0))) AS c4_sum, MIN(CAST(`hd_vehicle_count` AS DECIMAL(38,0))) AS c4_min, MAX(CAST(`hd_vehicle_count` AS DECIMAL(38,0))) AS c4_max FROM workspace.nirvana_tpcds.household_demographics",
+   "status": "aligned",
+   "table": "household_demographics",
+   "target_rows": 7200,
+   "target_sql": "SELECT COUNT(*) AS n_rows, COUNT(`hd_demo_sk`) AS c0_nonnull, SUM(CAST(`hd_demo_sk` AS DECIMAL(38,0))) AS c0_sum, MIN(CAST(`hd_demo_sk` AS DECIMAL(38,0))) AS c0_min, MAX(CAST(`hd_demo_sk` AS DECIMAL(38,0))) AS c0_max, COUNT(`hd_income_band_sk`) AS c1_nonnull, SUM(CAST(`hd_income_band_sk` AS DECIMAL(38,0))) AS c1_sum, MIN(CAST(`hd_income_band_sk` AS DECIMAL(38,0))) AS c1_min, MAX(CAST(`hd_income_band_sk` AS DECIMAL(38,0))) AS c1_max, COUNT(`hd_buy_potential`) AS c2_nonnull, SUM(LENGTH(`hd_buy_potential`)) AS c2_len, MIN(`hd_buy_potential`) AS c2_min, MAX(`hd_buy_potential`) AS c2_max, COUNT(`hd_dep_count`) AS c3_nonnull, SUM(CAST(`hd_dep_count` AS DECIMAL(38,0))) AS c3_sum, MIN(CAST(`hd_dep_count` AS DECIMAL(38,0))) AS c3_min, MAX(CAST(`hd_dep_count` AS DECIMAL(38,0))) AS c3_max, COUNT(`hd_vehicle_count`) AS c4_nonnull, SUM(CAST(`hd_vehicle_count` AS DECIMAL(38,0))) AS c4_sum, MIN(CAST(`hd_vehicle_count` AS DECIMAL(38,0))) AS c4_min, MAX(CAST(`hd_vehicle_count` AS DECIMAL(38,0))) AS c4_max FROM NIRVANA_TPCDS.household_demographics",
+   "type_changes": []
+  },
+  {
+   "differences": [],
+   "error": null,
+   "source_rows": 18000,
+   "source_sql": "SELECT COUNT(*) AS n_rows, COUNT(`i_item_sk`) AS c0_nonnull, SUM(CAST(`i_item_sk` AS DECIMAL(38,0))) AS c0_sum, MIN(CAST(`i_item_sk` AS DECIMAL(38,0))) AS c0_min, MAX(CAST(`i_item_sk` AS DECIMAL(38,0))) AS c0_max, COUNT(`i_item_id`) AS c1_nonnull, SUM(LENGTH(`i_item_id`)) AS c1_len, MIN(`i_item_id`) AS c1_min, MAX(`i_item_id`) AS c1_max, COUNT(`i_rec_start_date`) AS c2_nonnull, MIN(`i_rec_start_date`) AS c2_min, MAX(`i_rec_start_date`) AS c2_max, COUNT(`i_rec_end_date`) AS c3_nonnull, MIN(`i_rec_end_date`) AS c3_min, MAX(`i_rec_end_date`) AS c3_max, COUNT(`i_item_desc`) AS c4_nonnull, SUM(LENGTH(`i_item_desc`)) AS c4_len, MIN(`i_item_desc`) AS c4_min, MAX(`i_item_desc`) AS c4_max, COUNT(`i_current_price`) AS c5_nonnull, SUM(CAST(`i_current_price` AS DECIMAL(38,2))) AS c5_sum, MIN(CAST(`i_current_price` AS DECIMAL(38,2))) AS c5_min, MAX(CAST(`i_current_price` AS DECIMAL(38,2))) AS c5_max, COUNT(`i_wholesale_cost`) AS c6_nonnull, SUM(CAST(`i_wholesale_cost` AS DECIMAL(38,2))) AS c6_sum, MIN(CAST(`i_wholesale_cost` AS DECIMAL(38,2))) AS c6_min, MAX(CAST(`i_wholesale_cost` AS DECIMAL(38,2))) AS c6_max, COUNT(`i_brand_id`) AS c7_nonnull, SUM(CAST(`i_brand_id` AS DECIMAL(38,0))) AS c7_sum, MIN(CAST(`i_brand_id` AS DECIMAL(38,0))) AS c7_min, MAX(CAST(`i_brand_id` AS DECIMAL(38,0))) AS c7_max, COUNT(`i_brand`) AS c8_nonnull, SUM(LENGTH(`i_brand`)) AS c8_len, MIN(`i_brand`) AS c8_min, MAX(`i_brand`) AS c8_max, COUNT(`i_class_id`) AS c9_nonnull, SUM(CAST(`i_class_id` AS DECIMAL(38,0))) AS c9_sum, MIN(CAST(`i_class_id` AS DECIMAL(38,0))) AS c9_min, MAX(CAST(`i_class_id` AS DECIMAL(38,0))) AS c9_max, COUNT(`i_class`) AS c10_nonnull, SUM(LENGTH(`i_class`)) AS c10_len, MIN(`i_class`) AS c10_min, MAX(`i_class`) AS c10_max, COUNT(`i_category_id`) AS c11_nonnull, SUM(CAST(`i_category_id` AS DECIMAL(38,0))) AS c11_sum, MIN(CAST(`i_category_id` AS DECIMAL(38,0))) AS c11_min, MAX(CAST(`i_category_id` AS DECIMAL(38,0))) AS c11_max, COUNT(`i_category`) AS c12_nonnull, SUM(LENGTH(`i_category`)) AS c12_len, MIN(`i_category`) AS c12_min, MAX(`i_category`) AS c12_max, COUNT(`i_manufact_id`) AS c13_nonnull, SUM(CAST(`i_manufact_id` AS DECIMAL(38,0))) AS c13_sum, MIN(CAST(`i_manufact_id` AS DECIMAL(38,0))) AS c13_min, MAX(CAST(`i_manufact_id` AS DECIMAL(38,0))) AS c13_max, COUNT(`i_manufact`) AS c14_nonnull, SUM(LENGTH(`i_manufact`)) AS c14_len, MIN(`i_manufact`) AS c14_min, MAX(`i_manufact`) AS c14_max, COUNT(`i_size`) AS c15_nonnull, SUM(LENGTH(`i_size`)) AS c15_len, MIN(`i_size`) AS c15_min, MAX(`i_size`) AS c15_max, COUNT(`i_formulation`) AS c16_nonnull, SUM(LENGTH(`i_formulation`)) AS c16_len, MIN(`i_formulation`) AS c16_min, MAX(`i_formulation`) AS c16_max, COUNT(`i_color`) AS c17_nonnull, SUM(LENGTH(`i_color`)) AS c17_len, MIN(`i_color`) AS c17_min, MAX(`i_color`) AS c17_max, COUNT(`i_units`) AS c18_nonnull, SUM(LENGTH(`i_units`)) AS c18_len, MIN(`i_units`) AS c18_min, MAX(`i_units`) AS c18_max, COUNT(`i_container`) AS c19_nonnull, SUM(LENGTH(`i_container`)) AS c19_len, MIN(`i_container`) AS c19_min, MAX(`i_container`) AS c19_max, COUNT(`i_manager_id`) AS c20_nonnull, SUM(CAST(`i_manager_id` AS DECIMAL(38,0))) AS c20_sum, MIN(CAST(`i_manager_id` AS DECIMAL(38,0))) AS c20_min, MAX(CAST(`i_manager_id` AS DECIMAL(38,0))) AS c20_max, COUNT(`i_product_name`) AS c21_nonnull, SUM(LENGTH(`i_product_name`)) AS c21_len, MIN(`i_product_name`) AS c21_min, MAX(`i_product_name`) AS c21_max FROM workspace.nirvana_tpcds.item",
+   "status": "aligned",
+   "table": "item",
+   "target_rows": 18000,
+   "target_sql": "SELECT COUNT(*) AS n_rows, COUNT(`i_item_sk`) AS c0_nonnull, SUM(CAST(`i_item_sk` AS DECIMAL(38,0))) AS c0_sum, MIN(CAST(`i_item_sk` AS DECIMAL(38,0))) AS c0_min, MAX(CAST(`i_item_sk` AS DECIMAL(38,0))) AS c0_max, COUNT(`i_item_id`) AS c1_nonnull, SUM(LENGTH(`i_item_id`)) AS c1_len, MIN(`i_item_id`) AS c1_min, MAX(`i_item_id`) AS c1_max, COUNT(`i_rec_start_date`) AS c2_nonnull, MIN(`i_rec_start_date`) AS c2_min, MAX(`i_rec_start_date`) AS c2_max, COUNT(`i_rec_end_date`) AS c3_nonnull, MIN(`i_rec_end_date`) AS c3_min, MAX(`i_rec_end_date`) AS c3_max, COUNT(`i_item_desc`) AS c4_nonnull, SUM(LENGTH(`i_item_desc`)) AS c4_len, MIN(`i_item_desc`) AS c4_min, MAX(`i_item_desc`) AS c4_max, COUNT(`i_current_price`) AS c5_nonnull, SUM(CAST(`i_current_price` AS DECIMAL(38,2))) AS c5_sum, MIN(CAST(`i_current_price` AS DECIMAL(38,2))) AS c5_min, MAX(CAST(`i_current_price` AS DECIMAL(38,2))) AS c5_max, COUNT(`i_wholesale_cost`) AS c6_nonnull, SUM(CAST(`i_wholesale_cost` AS DECIMAL(38,2))) AS c6_sum, MIN(CAST(`i_wholesale_cost` AS DECIMAL(38,2))) AS c6_min, MAX(CAST(`i_wholesale_cost` AS DECIMAL(38,2))) AS c6_max, COUNT(`i_brand_id`) AS c7_nonnull, SUM(CAST(`i_brand_id` AS DECIMAL(38,0))) AS c7_sum, MIN(CAST(`i_brand_id` AS DECIMAL(38,0))) AS c7_min, MAX(CAST(`i_brand_id` AS DECIMAL(38,0))) AS c7_max, COUNT(`i_brand`) AS c8_nonnull, SUM(LENGTH(`i_brand`)) AS c8_len, MIN(`i_brand`) AS c8_min, MAX(`i_brand`) AS c8_max, COUNT(`i_class_id`) AS c9_nonnull, SUM(CAST(`i_class_id` AS DECIMAL(38,0))) AS c9_sum, MIN(CAST(`i_class_id` AS DECIMAL(38,0))) AS c9_min, MAX(CAST(`i_class_id` AS DECIMAL(38,0))) AS c9_max, COUNT(`i_class`) AS c10_nonnull, SUM(LENGTH(`i_class`)) AS c10_len, MIN(`i_class`) AS c10_min, MAX(`i_class`) AS c10_max, COUNT(`i_category_id`) AS c11_nonnull, SUM(CAST(`i_category_id` AS DECIMAL(38,0))) AS c11_sum, MIN(CAST(`i_category_id` AS DECIMAL(38,0))) AS c11_min, MAX(CAST(`i_category_id` AS DECIMAL(38,0))) AS c11_max, COUNT(`i_category`) AS c12_nonnull, SUM(LENGTH(`i_category`)) AS c12_len, MIN(`i_category`) AS c12_min, MAX(`i_category`) AS c12_max, COUNT(`i_manufact_id`) AS c13_nonnull, SUM(CAST(`i_manufact_id` AS DECIMAL(38,0))) AS c13_sum, MIN(CAST(`i_manufact_id` AS DECIMAL(38,0))) AS c13_min, MAX(CAST(`i_manufact_id` AS DECIMAL(38,0))) AS c13_max, COUNT(`i_manufact`) AS c14_nonnull, SUM(LENGTH(`i_manufact`)) AS c14_len, MIN(`i_manufact`) AS c14_min, MAX(`i_manufact`) AS c14_max, COUNT(`i_size`) AS c15_nonnull, SUM(LENGTH(`i_size`)) AS c15_len, MIN(`i_size`) AS c15_min, MAX(`i_size`) AS c15_max, COUNT(`i_formulation`) AS c16_nonnull, SUM(LENGTH(`i_formulation`)) AS c16_len, MIN(`i_formulation`) AS c16_min, MAX(`i_formulation`) AS c16_max, COUNT(`i_color`) AS c17_nonnull, SUM(LENGTH(`i_color`)) AS c17_len, MIN(`i_color`) AS c17_min, MAX(`i_color`) AS c17_max, COUNT(`i_units`) AS c18_nonnull, SUM(LENGTH(`i_units`)) AS c18_len, MIN(`i_units`) AS c18_min, MAX(`i_units`) AS c18_max, COUNT(`i_container`) AS c19_nonnull, SUM(LENGTH(`i_container`)) AS c19_len, MIN(`i_container`) AS c19_min, MAX(`i_container`) AS c19_max, COUNT(`i_manager_id`) AS c20_nonnull, SUM(CAST(`i_manager_id` AS DECIMAL(38,0))) AS c20_sum, MIN(CAST(`i_manager_id` AS DECIMAL(38,0))) AS c20_min, MAX(CAST(`i_manager_id` AS DECIMAL(38,0))) AS c20_max, COUNT(`i_product_name`) AS c21_nonnull, SUM(LENGTH(`i_product_name`)) AS c21_len, MIN(`i_product_name`) AS c21_min, MAX(`i_product_name`) AS c21_max FROM NIRVANA_TPCDS.item",
+   "type_changes": []
+  },
+  {
+   "differences": [],
+   "error": null,
+   "source_rows": 12,
+   "source_sql": "SELECT COUNT(*) AS n_rows, COUNT(`s_store_sk`) AS c0_nonnull, SUM(CAST(`s_store_sk` AS DECIMAL(38,0))) AS c0_sum, MIN(CAST(`s_store_sk` AS DECIMAL(38,0))) AS c0_min, MAX(CAST(`s_store_sk` AS DECIMAL(38,0))) AS c0_max, COUNT(`s_store_id`) AS c1_nonnull, SUM(LENGTH(`s_store_id`)) AS c1_len, MIN(`s_store_id`) AS c1_min, MAX(`s_store_id`) AS c1_max, COUNT(`s_rec_start_date`) AS c2_nonnull, MIN(`s_rec_start_date`) AS c2_min, MAX(`s_rec_start_date`) AS c2_max, COUNT(`s_rec_end_date`) AS c3_nonnull, MIN(`s_rec_end_date`) AS c3_min, MAX(`s_rec_end_date`) AS c3_max, COUNT(`s_closed_date_sk`) AS c4_nonnull, SUM(CAST(`s_closed_date_sk` AS DECIMAL(38,0))) AS c4_sum, MIN(CAST(`s_closed_date_sk` AS DECIMAL(38,0))) AS c4_min, MAX(CAST(`s_closed_date_sk` AS DECIMAL(38,0))) AS c4_max, COUNT(`s_store_name`) AS c5_nonnull, SUM(LENGTH(`s_store_name`)) AS c5_len, MIN(`s_store_name`) AS c5_min, MAX(`s_store_name`) AS c5_max, COUNT(`s_number_employees`) AS c6_nonnull, SUM(CAST(`s_number_employees` AS DECIMAL(38,0))) AS c6_sum, MIN(CAST(`s_number_employees` AS DECIMAL(38,0))) AS c6_min, MAX(CAST(`s_number_employees` AS DECIMAL(38,0))) AS c6_max, COUNT(`s_floor_space`) AS c7_nonnull, SUM(CAST(`s_floor_space` AS DECIMAL(38,0))) AS c7_sum, MIN(CAST(`s_floor_space` AS DECIMAL(38,0))) AS c7_min, MAX(CAST(`s_floor_space` AS DECIMAL(38,0))) AS c7_max, COUNT(`s_hours`) AS c8_nonnull, SUM(LENGTH(`s_hours`)) AS c8_len, MIN(`s_hours`) AS c8_min, MAX(`s_hours`) AS c8_max, COUNT(`s_manager`) AS c9_nonnull, SUM(LENGTH(`s_manager`)) AS c9_len, MIN(`s_manager`) AS c9_min, MAX(`s_manager`) AS c9_max, COUNT(`s_market_id`) AS c10_nonnull, SUM(CAST(`s_market_id` AS DECIMAL(38,0))) AS c10_sum, MIN(CAST(`s_market_id` AS DECIMAL(38,0))) AS c10_min, MAX(CAST(`s_market_id` AS DECIMAL(38,0))) AS c10_max, COUNT(`s_geography_class`) AS c11_nonnull, SUM(LENGTH(`s_geography_class`)) AS c11_len, MIN(`s_geography_class`) AS c11_min, MAX(`s_geography_class`) AS c11_max, COUNT(`s_market_desc`) AS c12_nonnull, SUM(LENGTH(`s_market_desc`)) AS c12_len, MIN(`s_market_desc`) AS c12_min, MAX(`s_market_desc`) AS c12_max, COUNT(`s_market_manager`) AS c13_nonnull, SUM(LENGTH(`s_market_manager`)) AS c13_len, MIN(`s_market_manager`) AS c13_min, MAX(`s_market_manager`) AS c13_max, COUNT(`s_division_id`) AS c14_nonnull, SUM(CAST(`s_division_id` AS DECIMAL(38,0))) AS c14_sum, MIN(CAST(`s_division_id` AS DECIMAL(38,0))) AS c14_min, MAX(CAST(`s_division_id` AS DECIMAL(38,0))) AS c14_max, COUNT(`s_division_name`) AS c15_nonnull, SUM(LENGTH(`s_division_name`)) AS c15_len, MIN(`s_division_name`) AS c15_min, MAX(`s_division_name`) AS c15_max, COUNT(`s_company_id`) AS c16_nonnull, SUM(CAST(`s_company_id` AS DECIMAL(38,0))) AS c16_sum, MIN(CAST(`s_company_id` AS DECIMAL(38,0))) AS c16_min, MAX(CAST(`s_company_id` AS DECIMAL(38,0))) AS c16_max, COUNT(`s_company_name`) AS c17_nonnull, SUM(LENGTH(`s_company_name`)) AS c17_len, MIN(`s_company_name`) AS c17_min, MAX(`s_company_name`) AS c17_max, COUNT(`s_street_number`) AS c18_nonnull, SUM(LENGTH(`s_street_number`)) AS c18_len, MIN(`s_street_number`) AS c18_min, MAX(`s_street_number`) AS c18_max, COUNT(`s_street_name`) AS c19_nonnull, SUM(LENGTH(`s_street_name`)) AS c19_len, MIN(`s_street_name`) AS c19_min, MAX(`s_street_name`) AS c19_max, COUNT(`s_street_type`) AS c20_nonnull, SUM(LENGTH(`s_street_type`)) AS c20_len, MIN(`s_street_type`) AS c20_min, MAX(`s_street_type`) AS c20_max, COUNT(`s_suite_number`) AS c21_nonnull, SUM(LENGTH(`s_suite_number`)) AS c21_len, MIN(`s_suite_number`) AS c21_min, MAX(`s_suite_number`) AS c21_max, COUNT(`s_city`) AS c22_nonnull, SUM(LENGTH(`s_city`)) AS c22_len, MIN(`s_city`) AS c22_min, MAX(`s_city`) AS c22_max, COUNT(`s_county`) AS c23_nonnull, SUM(LENGTH(`s_county`)) AS c23_len, MIN(`s_county`) AS c23_min, MAX(`s_county`) AS c23_max, COUNT(`s_state`) AS c24_nonnull, SUM(LENGTH(`s_state`)) AS c24_len, MIN(`s_state`) AS c24_min, MAX(`s_state`) AS c24_max, COUNT(`s_zip`) AS c25_nonnull, SUM(LENGTH(`s_zip`)) AS c25_len, MIN(`s_zip`) AS c25_min, MAX(`s_zip`) AS c25_max, COUNT(`s_country`) AS c26_nonnull, SUM(LENGTH(`s_country`)) AS c26_len, MIN(`s_country`) AS c26_min, MAX(`s_country`) AS c26_max, COUNT(`s_gmt_offset`) AS c27_nonnull, SUM(CAST(`s_gmt_offset` AS DECIMAL(38,2))) AS c27_sum, MIN(CAST(`s_gmt_offset` AS DECIMAL(38,2))) AS c27_min, MAX(CAST(`s_gmt_offset` AS DECIMAL(38,2))) AS c27_max, COUNT(`s_tax_percentage`) AS c28_nonnull, SUM(CAST(`s_tax_percentage` AS DECIMAL(38,2))) AS c28_sum, MIN(CAST(`s_tax_percentage` AS DECIMAL(38,2))) AS c28_min, MAX(CAST(`s_tax_percentage` AS DECIMAL(38,2))) AS c28_max FROM workspace.nirvana_tpcds.store",
+   "status": "aligned",
+   "table": "store",
+   "target_rows": 12,
+   "target_sql": "SELECT COUNT(*) AS n_rows, COUNT(`s_store_sk`) AS c0_nonnull, SUM(CAST(`s_store_sk` AS DECIMAL(38,0))) AS c0_sum, MIN(CAST(`s_store_sk` AS DECIMAL(38,0))) AS c0_min, MAX(CAST(`s_store_sk` AS DECIMAL(38,0))) AS c0_max, COUNT(`s_store_id`) AS c1_nonnull, SUM(LENGTH(`s_store_id`)) AS c1_len, MIN(`s_store_id`) AS c1_min, MAX(`s_store_id`) AS c1_max, COUNT(`s_rec_start_date`) AS c2_nonnull, MIN(`s_rec_start_date`) AS c2_min, MAX(`s_rec_start_date`) AS c2_max, COUNT(`s_rec_end_date`) AS c3_nonnull, MIN(`s_rec_end_date`) AS c3_min, MAX(`s_rec_end_date`) AS c3_max, COUNT(`s_closed_date_sk`) AS c4_nonnull, SUM(CAST(`s_closed_date_sk` AS DECIMAL(38,0))) AS c4_sum, MIN(CAST(`s_closed_date_sk` AS DECIMAL(38,0))) AS c4_min, MAX(CAST(`s_closed_date_sk` AS DECIMAL(38,0))) AS c4_max, COUNT(`s_store_name`) AS c5_nonnull, SUM(LENGTH(`s_store_name`)) AS c5_len, MIN(`s_store_name`) AS c5_min, MAX(`s_store_name`) AS c5_max, COUNT(`s_number_employees`) AS c6_nonnull, SUM(CAST(`s_number_employees` AS DECIMAL(38,0))) AS c6_sum, MIN(CAST(`s_number_employees` AS DECIMAL(38,0))) AS c6_min, MAX(CAST(`s_number_employees` AS DECIMAL(38,0))) AS c6_max, COUNT(`s_floor_space`) AS c7_nonnull, SUM(CAST(`s_floor_space` AS DECIMAL(38,0))) AS c7_sum, MIN(CAST(`s_floor_space` AS DECIMAL(38,0))) AS c7_min, MAX(CAST(`s_floor_space` AS DECIMAL(38,0))) AS c7_max, COUNT(`s_hours`) AS c8_nonnull, SUM(LENGTH(`s_hours`)) AS c8_len, MIN(`s_hours`) AS c8_min, MAX(`s_hours`) AS c8_max, COUNT(`s_manager`) AS c9_nonnull, SUM(LENGTH(`s_manager`)) AS c9_len, MIN(`s_manager`) AS c9_min, MAX(`s_manager`) AS c9_max, COUNT(`s_market_id`) AS c10_nonnull, SUM(CAST(`s_market_id` AS DECIMAL(38,0))) AS c10_sum, MIN(CAST(`s_market_id` AS DECIMAL(38,0))) AS c10_min, MAX(CAST(`s_market_id` AS DECIMAL(38,0))) AS c10_max, COUNT(`s_geography_class`) AS c11_nonnull, SUM(LENGTH(`s_geography_class`)) AS c11_len, MIN(`s_geography_class`) AS c11_min, MAX(`s_geography_class`) AS c11_max, COUNT(`s_market_desc`) AS c12_nonnull, SUM(LENGTH(`s_market_desc`)) AS c12_len, MIN(`s_market_desc`) AS c12_min, MAX(`s_market_desc`) AS c12_max, COUNT(`s_market_manager`) AS c13_nonnull, SUM(LENGTH(`s_market_manager`)) AS c13_len, MIN(`s_market_manager`) AS c13_min, MAX(`s_market_manager`) AS c13_max, COUNT(`s_division_id`) AS c14_nonnull, SUM(CAST(`s_division_id` AS DECIMAL(38,0))) AS c14_sum, MIN(CAST(`s_division_id` AS DECIMAL(38,0))) AS c14_min, MAX(CAST(`s_division_id` AS DECIMAL(38,0))) AS c14_max, COUNT(`s_division_name`) AS c15_nonnull, SUM(LENGTH(`s_division_name`)) AS c15_len, MIN(`s_division_name`) AS c15_min, MAX(`s_division_name`) AS c15_max, COUNT(`s_company_id`) AS c16_nonnull, SUM(CAST(`s_company_id` AS DECIMAL(38,0))) AS c16_sum, MIN(CAST(`s_company_id` AS DECIMAL(38,0))) AS c16_min, MAX(CAST(`s_company_id` AS DECIMAL(38,0))) AS c16_max, COUNT(`s_company_name`) AS c17_nonnull, SUM(LENGTH(`s_company_name`)) AS c17_len, MIN(`s_company_name`) AS c17_min, MAX(`s_company_name`) AS c17_max, COUNT(`s_street_number`) AS c18_nonnull, SUM(LENGTH(`s_street_number`)) AS c18_len, MIN(`s_street_number`) AS c18_min, MAX(`s_street_number`) AS c18_max, COUNT(`s_street_name`) AS c19_nonnull, SUM(LENGTH(`s_street_name`)) AS c19_len, MIN(`s_street_name`) AS c19_min, MAX(`s_street_name`) AS c19_max, COUNT(`s_street_type`) AS c20_nonnull, SUM(LENGTH(`s_street_type`)) AS c20_len, MIN(`s_street_type`) AS c20_min, MAX(`s_street_type`) AS c20_max, COUNT(`s_suite_number`) AS c21_nonnull, SUM(LENGTH(`s_suite_number`)) AS c21_len, MIN(`s_suite_number`) AS c21_min, MAX(`s_suite_number`) AS c21_max, COUNT(`s_city`) AS c22_nonnull, SUM(LENGTH(`s_city`)) AS c22_len, MIN(`s_city`) AS c22_min, MAX(`s_city`) AS c22_max, COUNT(`s_county`) AS c23_nonnull, SUM(LENGTH(`s_county`)) AS c23_len, MIN(`s_county`) AS c23_min, MAX(`s_county`) AS c23_max, COUNT(`s_state`) AS c24_nonnull, SUM(LENGTH(`s_state`)) AS c24_len, MIN(`s_state`) AS c24_min, MAX(`s_state`) AS c24_max, COUNT(`s_zip`) AS c25_nonnull, SUM(LENGTH(`s_zip`)) AS c25_len, MIN(`s_zip`) AS c25_min, MAX(`s_zip`) AS c25_max, COUNT(`s_country`) AS c26_nonnull, SUM(LENGTH(`s_country`)) AS c26_len, MIN(`s_country`) AS c26_min, MAX(`s_country`) AS c26_max, COUNT(`s_gmt_offset`) AS c27_nonnull, SUM(CAST(`s_gmt_offset` AS DECIMAL(38,2))) AS c27_sum, MIN(CAST(`s_gmt_offset` AS DECIMAL(38,2))) AS c27_min, MAX(CAST(`s_gmt_offset` AS DECIMAL(38,2))) AS c27_max, COUNT(`s_tax_percentage`) AS c28_nonnull, SUM(CAST(`s_tax_percentage` AS DECIMAL(38,2))) AS c28_sum, MIN(CAST(`s_tax_percentage` AS DECIMAL(38,2))) AS c28_min, MAX(CAST(`s_tax_percentage` AS DECIMAL(38,2))) AS c28_max FROM NIRVANA_TPCDS.store",
+   "type_changes": []
+  },
+  {
+   "differences": [],
+   "error": null,
+   "source_rows": 2880404,
+   "source_sql": "SELECT COUNT(*) AS n_rows, COUNT(`ss_sold_date_sk`) AS c0_nonnull, SUM(CAST(`ss_sold_date_sk` AS DECIMAL(38,0))) AS c0_sum, MIN(CAST(`ss_sold_date_sk` AS DECIMAL(38,0))) AS c0_min, MAX(CAST(`ss_sold_date_sk` AS DECIMAL(38,0))) AS c0_max, COUNT(`ss_sold_time_sk`) AS c1_nonnull, SUM(CAST(`ss_sold_time_sk` AS DECIMAL(38,0))) AS c1_sum, MIN(CAST(`ss_sold_time_sk` AS DECIMAL(38,0))) AS c1_min, MAX(CAST(`ss_sold_time_sk` AS DECIMAL(38,0))) AS c1_max, COUNT(`ss_item_sk`) AS c2_nonnull, SUM(CAST(`ss_item_sk` AS DECIMAL(38,0))) AS c2_sum, MIN(CAST(`ss_item_sk` AS DECIMAL(38,0))) AS c2_min, MAX(CAST(`ss_item_sk` AS DECIMAL(38,0))) AS c2_max, COUNT(`ss_customer_sk`) AS c3_nonnull, SUM(CAST(`ss_customer_sk` AS DECIMAL(38,0))) AS c3_sum, MIN(CAST(`ss_customer_sk` AS DECIMAL(38,0))) AS c3_min, MAX(CAST(`ss_customer_sk` AS DECIMAL(38,0))) AS c3_max, COUNT(`ss_cdemo_sk`) AS c4_nonnull, SUM(CAST(`ss_cdemo_sk` AS DECIMAL(38,0))) AS c4_sum, MIN(CAST(`ss_cdemo_sk` AS DECIMAL(38,0))) AS c4_min, MAX(CAST(`ss_cdemo_sk` AS DECIMAL(38,0))) AS c4_max, COUNT(`ss_hdemo_sk`) AS c5_nonnull, SUM(CAST(`ss_hdemo_sk` AS DECIMAL(38,0))) AS c5_sum, MIN(CAST(`ss_hdemo_sk` AS DECIMAL(38,0))) AS c5_min, MAX(CAST(`ss_hdemo_sk` AS DECIMAL(38,0))) AS c5_max, COUNT(`ss_addr_sk`) AS c6_nonnull, SUM(CAST(`ss_addr_sk` AS DECIMAL(38,0))) AS c6_sum, MIN(CAST(`ss_addr_sk` AS DECIMAL(38,0))) AS c6_min, MAX(CAST(`ss_addr_sk` AS DECIMAL(38,0))) AS c6_max, COUNT(`ss_store_sk`) AS c7_nonnull, SUM(CAST(`ss_store_sk` AS DECIMAL(38,0))) AS c7_sum, MIN(CAST(`ss_store_sk` AS DECIMAL(38,0))) AS c7_min, MAX(CAST(`ss_store_sk` AS DECIMAL(38,0))) AS c7_max, COUNT(`ss_promo_sk`) AS c8_nonnull, SUM(CAST(`ss_promo_sk` AS DECIMAL(38,0))) AS c8_sum, MIN(CAST(`ss_promo_sk` AS DECIMAL(38,0))) AS c8_min, MAX(CAST(`ss_promo_sk` AS DECIMAL(38,0))) AS c8_max, COUNT(`ss_ticket_number`) AS c9_nonnull, SUM(CAST(`ss_ticket_number` AS DECIMAL(38,0))) AS c9_sum, MIN(CAST(`ss_ticket_number` AS DECIMAL(38,0))) AS c9_min, MAX(CAST(`ss_ticket_number` AS DECIMAL(38,0))) AS c9_max, COUNT(`ss_quantity`) AS c10_nonnull, SUM(CAST(`ss_quantity` AS DECIMAL(38,0))) AS c10_sum, MIN(CAST(`ss_quantity` AS DECIMAL(38,0))) AS c10_min, MAX(CAST(`ss_quantity` AS DECIMAL(38,0))) AS c10_max, COUNT(`ss_wholesale_cost`) AS c11_nonnull, SUM(CAST(`ss_wholesale_cost` AS DECIMAL(38,2))) AS c11_sum, MIN(CAST(`ss_wholesale_cost` AS DECIMAL(38,2))) AS c11_min, MAX(CAST(`ss_wholesale_cost` AS DECIMAL(38,2))) AS c11_max, COUNT(`ss_list_price`) AS c12_nonnull, SUM(CAST(`ss_list_price` AS DECIMAL(38,2))) AS c12_sum, MIN(CAST(`ss_list_price` AS DECIMAL(38,2))) AS c12_min, MAX(CAST(`ss_list_price` AS DECIMAL(38,2))) AS c12_max, COUNT(`ss_sales_price`) AS c13_nonnull, SUM(CAST(`ss_sales_price` AS DECIMAL(38,2))) AS c13_sum, MIN(CAST(`ss_sales_price` AS DECIMAL(38,2))) AS c13_min, MAX(CAST(`ss_sales_price` AS DECIMAL(38,2))) AS c13_max, COUNT(`ss_ext_discount_amt`) AS c14_nonnull, SUM(CAST(`ss_ext_discount_amt` AS DECIMAL(38,2))) AS c14_sum, MIN(CAST(`ss_ext_discount_amt` AS DECIMAL(38,2))) AS c14_min, MAX(CAST(`ss_ext_discount_amt` AS DECIMAL(38,2))) AS c14_max, COUNT(`ss_ext_sales_price`) AS c15_nonnull, SUM(CAST(`ss_ext_sales_price` AS DECIMAL(38,2))) AS c15_sum, MIN(CAST(`ss_ext_sales_price` AS DECIMAL(38,2))) AS c15_min, MAX(CAST(`ss_ext_sales_price` AS DECIMAL(38,2))) AS c15_max, COUNT(`ss_ext_wholesale_cost`) AS c16_nonnull, SUM(CAST(`ss_ext_wholesale_cost` AS DECIMAL(38,2))) AS c16_sum, MIN(CAST(`ss_ext_wholesale_cost` AS DECIMAL(38,2))) AS c16_min, MAX(CAST(`ss_ext_wholesale_cost` AS DECIMAL(38,2))) AS c16_max, COUNT(`ss_ext_list_price`) AS c17_nonnull, SUM(CAST(`ss_ext_list_price` AS DECIMAL(38,2))) AS c17_sum, MIN(CAST(`ss_ext_list_price` AS DECIMAL(38,2))) AS c17_min, MAX(CAST(`ss_ext_list_price` AS DECIMAL(38,2))) AS c17_max, COUNT(`ss_ext_tax`) AS c18_nonnull, SUM(CAST(`ss_ext_tax` AS DECIMAL(38,2))) AS c18_sum, MIN(CAST(`ss_ext_tax` AS DECIMAL(38,2))) AS c18_min, MAX(CAST(`ss_ext_tax` AS DECIMAL(38,2))) AS c18_max, COUNT(`ss_coupon_amt`) AS c19_nonnull, SUM(CAST(`ss_coupon_amt` AS DECIMAL(38,2))) AS c19_sum, MIN(CAST(`ss_coupon_amt` AS DECIMAL(38,2))) AS c19_min, MAX(CAST(`ss_coupon_amt` AS DECIMAL(38,2))) AS c19_max, COUNT(`ss_net_paid`) AS c20_nonnull, SUM(CAST(`ss_net_paid` AS DECIMAL(38,2))) AS c20_sum, MIN(CAST(`ss_net_paid` AS DECIMAL(38,2))) AS c20_min, MAX(CAST(`ss_net_paid` AS DECIMAL(38,2))) AS c20_max, COUNT(`ss_net_paid_inc_tax`) AS c21_nonnull, SUM(CAST(`ss_net_paid_inc_tax` AS DECIMAL(38,2))) AS c21_sum, MIN(CAST(`ss_net_paid_inc_tax` AS DECIMAL(38,2))) AS c21_min, MAX(CAST(`ss_net_paid_inc_tax` AS DECIMAL(38,2))) AS c21_max, COUNT(`ss_net_profit`) AS c22_nonnull, SUM(CAST(`ss_net_profit` AS DECIMAL(38,2))) AS c22_sum, MIN(CAST(`ss_net_profit` AS DECIMAL(38,2))) AS c22_min, MAX(CAST(`ss_net_profit` AS DECIMAL(38,2))) AS c22_max FROM workspace.nirvana_tpcds.store_sales",
+   "status": "aligned",
+   "table": "store_sales",
+   "target_rows": 2880404,
+   "target_sql": "SELECT COUNT(*) AS n_rows, COUNT(`ss_sold_date_sk`) AS c0_nonnull, SUM(CAST(`ss_sold_date_sk` AS DECIMAL(38,0))) AS c0_sum, MIN(CAST(`ss_sold_date_sk` AS DECIMAL(38,0))) AS c0_min, MAX(CAST(`ss_sold_date_sk` AS DECIMAL(38,0))) AS c0_max, COUNT(`ss_sold_time_sk`) AS c1_nonnull, SUM(CAST(`ss_sold_time_sk` AS DECIMAL(38,0))) AS c1_sum, MIN(CAST(`ss_sold_time_sk` AS DECIMAL(38,0))) AS c1_min, MAX(CAST(`ss_sold_time_sk` AS DECIMAL(38,0))) AS c1_max, COUNT(`ss_item_sk`) AS c2_nonnull, SUM(CAST(`ss_item_sk` AS DECIMAL(38,0))) AS c2_sum, MIN(CAST(`ss_item_sk` AS DECIMAL(38,0))) AS c2_min, MAX(CAST(`ss_item_sk` AS DECIMAL(38,0))) AS c2_max, COUNT(`ss_customer_sk`) AS c3_nonnull, SUM(CAST(`ss_customer_sk` AS DECIMAL(38,0))) AS c3_sum, MIN(CAST(`ss_customer_sk` AS DECIMAL(38,0))) AS c3_min, MAX(CAST(`ss_customer_sk` AS DECIMAL(38,0))) AS c3_max, COUNT(`ss_cdemo_sk`) AS c4_nonnull, SUM(CAST(`ss_cdemo_sk` AS DECIMAL(38,0))) AS c4_sum, MIN(CAST(`ss_cdemo_sk` AS DECIMAL(38,0))) AS c4_min, MAX(CAST(`ss_cdemo_sk` AS DECIMAL(38,0))) AS c4_max, COUNT(`ss_hdemo_sk`) AS c5_nonnull, SUM(CAST(`ss_hdemo_sk` AS DECIMAL(38,0))) AS c5_sum, MIN(CAST(`ss_hdemo_sk` AS DECIMAL(38,0))) AS c5_min, MAX(CAST(`ss_hdemo_sk` AS DECIMAL(38,0))) AS c5_max, COUNT(`ss_addr_sk`) AS c6_nonnull, SUM(CAST(`ss_addr_sk` AS DECIMAL(38,0))) AS c6_sum, MIN(CAST(`ss_addr_sk` AS DECIMAL(38,0))) AS c6_min, MAX(CAST(`ss_addr_sk` AS DECIMAL(38,0))) AS c6_max, COUNT(`ss_store_sk`) AS c7_nonnull, SUM(CAST(`ss_store_sk` AS DECIMAL(38,0))) AS c7_sum, MIN(CAST(`ss_store_sk` AS DECIMAL(38,0))) AS c7_min, MAX(CAST(`ss_store_sk` AS DECIMAL(38,0))) AS c7_max, COUNT(`ss_promo_sk`) AS c8_nonnull, SUM(CAST(`ss_promo_sk` AS DECIMAL(38,0))) AS c8_sum, MIN(CAST(`ss_promo_sk` AS DECIMAL(38,0))) AS c8_min, MAX(CAST(`ss_promo_sk` AS DECIMAL(38,0))) AS c8_max, COUNT(`ss_ticket_number`) AS c9_nonnull, SUM(CAST(`ss_ticket_number` AS DECIMAL(38,0))) AS c9_sum, MIN(CAST(`ss_ticket_number` AS DECIMAL(38,0))) AS c9_min, MAX(CAST(`ss_ticket_number` AS DECIMAL(38,0))) AS c9_max, COUNT(`ss_quantity`) AS c10_nonnull, SUM(CAST(`ss_quantity` AS DECIMAL(38,0))) AS c10_sum, MIN(CAST(`ss_quantity` AS DECIMAL(38,0))) AS c10_min, MAX(CAST(`ss_quantity` AS DECIMAL(38,0))) AS c10_max, COUNT(`ss_wholesale_cost`) AS c11_nonnull, SUM(CAST(`ss_wholesale_cost` AS DECIMAL(38,2))) AS c11_sum, MIN(CAST(`ss_wholesale_cost` AS DECIMAL(38,2))) AS c11_min, MAX(CAST(`ss_wholesale_cost` AS DECIMAL(38,2))) AS c11_max, COUNT(`ss_list_price`) AS c12_nonnull, SUM(CAST(`ss_list_price` AS DECIMAL(38,2))) AS c12_sum, MIN(CAST(`ss_list_price` AS DECIMAL(38,2))) AS c12_min, MAX(CAST(`ss_list_price` AS DECIMAL(38,2))) AS c12_max, COUNT(`ss_sales_price`) AS c13_nonnull, SUM(CAST(`ss_sales_price` AS DECIMAL(38,2))) AS c13_sum, MIN(CAST(`ss_sales_price` AS DECIMAL(38,2))) AS c13_min, MAX(CAST(`ss_sales_price` AS DECIMAL(38,2))) AS c13_max, COUNT(`ss_ext_discount_amt`) AS c14_nonnull, SUM(CAST(`ss_ext_discount_amt` AS DECIMAL(38,2))) AS c14_sum, MIN(CAST(`ss_ext_discount_amt` AS DECIMAL(38,2))) AS c14_min, MAX(CAST(`ss_ext_discount_amt` AS DECIMAL(38,2))) AS c14_max, COUNT(`ss_ext_sales_price`) AS c15_nonnull, SUM(CAST(`ss_ext_sales_price` AS DECIMAL(38,2))) AS c15_sum, MIN(CAST(`ss_ext_sales_price` AS DECIMAL(38,2))) AS c15_min, MAX(CAST(`ss_ext_sales_price` AS DECIMAL(38,2))) AS c15_max, COUNT(`ss_ext_wholesale_cost`) AS c16_nonnull, SUM(CAST(`ss_ext_wholesale_cost` AS DECIMAL(38,2))) AS c16_sum, MIN(CAST(`ss_ext_wholesale_cost` AS DECIMAL(38,2))) AS c16_min, MAX(CAST(`ss_ext_wholesale_cost` AS DECIMAL(38,2))) AS c16_max, COUNT(`ss_ext_list_price`) AS c17_nonnull, SUM(CAST(`ss_ext_list_price` AS DECIMAL(38,2))) AS c17_sum, MIN(CAST(`ss_ext_list_price` AS DECIMAL(38,2))) AS c17_min, MAX(CAST(`ss_ext_list_price` AS DECIMAL(38,2))) AS c17_max, COUNT(`ss_ext_tax`) AS c18_nonnull, SUM(CAST(`ss_ext_tax` AS DECIMAL(38,2))) AS c18_sum, MIN(CAST(`ss_ext_tax` AS DECIMAL(38,2))) AS c18_min, MAX(CAST(`ss_ext_tax` AS DECIMAL(38,2))) AS c18_max, COUNT(`ss_coupon_amt`) AS c19_nonnull, SUM(CAST(`ss_coupon_amt` AS DECIMAL(38,2))) AS c19_sum, MIN(CAST(`ss_coupon_amt` AS DECIMAL(38,2))) AS c19_min, MAX(CAST(`ss_coupon_amt` AS DECIMAL(38,2))) AS c19_max, COUNT(`ss_net_paid`) AS c20_nonnull, SUM(CAST(`ss_net_paid` AS DECIMAL(38,2))) AS c20_sum, MIN(CAST(`ss_net_paid` AS DECIMAL(38,2))) AS c20_min, MAX(CAST(`ss_net_paid` AS DECIMAL(38,2))) AS c20_max, COUNT(`ss_net_paid_inc_tax`) AS c21_nonnull, SUM(CAST(`ss_net_paid_inc_tax` AS DECIMAL(38,2))) AS c21_sum, MIN(CAST(`ss_net_paid_inc_tax` AS DECIMAL(38,2))) AS c21_min, MAX(CAST(`ss_net_paid_inc_tax` AS DECIMAL(38,2))) AS c21_max, COUNT(`ss_net_profit`) AS c22_nonnull, SUM(CAST(`ss_net_profit` AS DECIMAL(38,2))) AS c22_sum, MIN(CAST(`ss_net_profit` AS DECIMAL(38,2))) AS c22_min, MAX(CAST(`ss_net_profit` AS DECIMAL(38,2))) AS c22_max FROM NIRVANA_TPCDS.store_sales",
+   "type_changes": []
+  },
+  {
+   "differences": [],
+   "error": null,
+   "source_rows": 86400,
+   "source_sql": "SELECT COUNT(*) AS n_rows, COUNT(`t_time_sk`) AS c0_nonnull, SUM(CAST(`t_time_sk` AS DECIMAL(38,0))) AS c0_sum, MIN(CAST(`t_time_sk` AS DECIMAL(38,0))) AS c0_min, MAX(CAST(`t_time_sk` AS DECIMAL(38,0))) AS c0_max, COUNT(`t_time_id`) AS c1_nonnull, SUM(LENGTH(`t_time_id`)) AS c1_len, MIN(`t_time_id`) AS c1_min, MAX(`t_time_id`) AS c1_max, COUNT(`t_time`) AS c2_nonnull, SUM(CAST(`t_time` AS DECIMAL(38,0))) AS c2_sum, MIN(CAST(`t_time` AS DECIMAL(38,0))) AS c2_min, MAX(CAST(`t_time` AS DECIMAL(38,0))) AS c2_max, COUNT(`t_hour`) AS c3_nonnull, SUM(CAST(`t_hour` AS DECIMAL(38,0))) AS c3_sum, MIN(CAST(`t_hour` AS DECIMAL(38,0))) AS c3_min, MAX(CAST(`t_hour` AS DECIMAL(38,0))) AS c3_max, COUNT(`t_minute`) AS c4_nonnull, SUM(CAST(`t_minute` AS DECIMAL(38,0))) AS c4_sum, MIN(CAST(`t_minute` AS DECIMAL(38,0))) AS c4_min, MAX(CAST(`t_minute` AS DECIMAL(38,0))) AS c4_max, COUNT(`t_second`) AS c5_nonnull, SUM(CAST(`t_second` AS DECIMAL(38,0))) AS c5_sum, MIN(CAST(`t_second` AS DECIMAL(38,0))) AS c5_min, MAX(CAST(`t_second` AS DECIMAL(38,0))) AS c5_max, COUNT(`t_am_pm`) AS c6_nonnull, SUM(LENGTH(`t_am_pm`)) AS c6_len, MIN(`t_am_pm`) AS c6_min, MAX(`t_am_pm`) AS c6_max, COUNT(`t_shift`) AS c7_nonnull, SUM(LENGTH(`t_shift`)) AS c7_len, MIN(`t_shift`) AS c7_min, MAX(`t_shift`) AS c7_max, COUNT(`t_sub_shift`) AS c8_nonnull, SUM(LENGTH(`t_sub_shift`)) AS c8_len, MIN(`t_sub_shift`) AS c8_min, MAX(`t_sub_shift`) AS c8_max, COUNT(`t_meal_time`) AS c9_nonnull, SUM(LENGTH(`t_meal_time`)) AS c9_len, MIN(`t_meal_time`) AS c9_min, MAX(`t_meal_time`) AS c9_max FROM workspace.nirvana_tpcds.time_dim",
+   "status": "aligned",
+   "table": "time_dim",
+   "target_rows": 86400,
+   "target_sql": "SELECT COUNT(*) AS n_rows, COUNT(`t_time_sk`) AS c0_nonnull, SUM(CAST(`t_time_sk` AS DECIMAL(38,0))) AS c0_sum, MIN(CAST(`t_time_sk` AS DECIMAL(38,0))) AS c0_min, MAX(CAST(`t_time_sk` AS DECIMAL(38,0))) AS c0_max, COUNT(`t_time_id`) AS c1_nonnull, SUM(LENGTH(`t_time_id`)) AS c1_len, MIN(`t_time_id`) AS c1_min, MAX(`t_time_id`) AS c1_max, COUNT(`t_time`) AS c2_nonnull, SUM(CAST(`t_time` AS DECIMAL(38,0))) AS c2_sum, MIN(CAST(`t_time` AS DECIMAL(38,0))) AS c2_min, MAX(CAST(`t_time` AS DECIMAL(38,0))) AS c2_max, COUNT(`t_hour`) AS c3_nonnull, SUM(CAST(`t_hour` AS DECIMAL(38,0))) AS c3_sum, MIN(CAST(`t_hour` AS DECIMAL(38,0))) AS c3_min, MAX(CAST(`t_hour` AS DECIMAL(38,0))) AS c3_max, COUNT(`t_minute`) AS c4_nonnull, SUM(CAST(`t_minute` AS DECIMAL(38,0))) AS c4_sum, MIN(CAST(`t_minute` AS DECIMAL(38,0))) AS c4_min, MAX(CAST(`t_minute` AS DECIMAL(38,0))) AS c4_max, COUNT(`t_second`) AS c5_nonnull, SUM(CAST(`t_second` AS DECIMAL(38,0))) AS c5_sum, MIN(CAST(`t_second` AS DECIMAL(38,0))) AS c5_min, MAX(CAST(`t_second` AS DECIMAL(38,0))) AS c5_max, COUNT(`t_am_pm`) AS c6_nonnull, SUM(LENGTH(`t_am_pm`)) AS c6_len, MIN(`t_am_pm`) AS c6_min, MAX(`t_am_pm`) AS c6_max, COUNT(`t_shift`) AS c7_nonnull, SUM(LENGTH(`t_shift`)) AS c7_len, MIN(`t_shift`) AS c7_min, MAX(`t_shift`) AS c7_max, COUNT(`t_sub_shift`) AS c8_nonnull, SUM(LENGTH(`t_sub_shift`)) AS c8_len, MIN(`t_sub_shift`) AS c8_min, MAX(`t_sub_shift`) AS c8_max, COUNT(`t_meal_time`) AS c9_nonnull, SUM(LENGTH(`t_meal_time`)) AS c9_len, MIN(`t_meal_time`) AS c9_min, MAX(`t_meal_time`) AS c9_max FROM NIRVANA_TPCDS.time_dim",
+   "type_changes": []
+  }
+ ],
+ "events": [
+  {
+   "at": 1793124876.413888,
+   "data": {
+    "queries": 5,
+    "source": {
+     "dialect": "databricks",
+     "host": "https://dbc-0a0ccad0-ea59.cloud.databricks.com",
+     "location": "workspace.nirvana_tpcds",
+     "name": "databricks",
+     "warehouse_id": "c05427eb43e21fad"
+    },
+    "target": {
+     "dialect": "spark",
+     "location": "NIRVANA_TPCDS",
+     "name": "zetaris",
+     "rest_url": "http://localhost:8888/api/v1.0"
+    }
+   },
+   "kind": "started",
+   "seq": 1
+  },
+  {
+   "at": 1793124878.5276318,
+   "data": {
+    "detail": "SELECT 1 returned one row",
+    "engine": "databricks",
+    "ok": true,
+    "role": "source"
+   },
+   "kind": "ping",
+   "seq": 2
+  },
+  {
+   "at": 1793124878.894166,
+   "data": {
+    "detail": "SELECT 1 returned one row",
+    "engine": "zetaris",
+    "ok": true,
+    "role": "target"
+   },
+   "kind": "ping",
+   "seq": 3
+  },
+  {
+   "at": 1793124885.058976,
+   "data": {
+    "source_rows": 73049,
+    "status": "aligned",
+    "table": "date_dim",
+    "target_rows": 73049,
+    "type_changes": 0
+   },
+   "kind": "aligned",
+   "seq": 4
+  },
+  {
+   "at": 1793124887.7139719,
+   "data": {
+    "source_rows": 7200,
+    "status": "aligned",
+    "table": "household_demographics",
+    "target_rows": 7200,
+    "type_changes": 0
+   },
+   "kind": "aligned",
+   "seq": 5
+  },
+  {
+   "at": 1793124894.014552,
+   "data": {
+    "source_rows": 18000,
+    "status": "aligned",
+    "table": "item",
+    "target_rows": 18000,
+    "type_changes": 0
+   },
+   "kind": "aligned",
+   "seq": 6
+  },
+  {
+   "at": 1793124898.684434,
+   "data": {
+    "source_rows": 12,
+    "status": "aligned",
+    "table": "store",
+    "target_rows": 12,
+    "type_changes": 0
+   },
+   "kind": "aligned",
+   "seq": 7
+  },
+  {
+   "at": 1793124922.010245,
+   "data": {
+    "source_rows": 2880404,
+    "status": "aligned",
+    "table": "store_sales",
+    "target_rows": 2880404,
+    "type_changes": 0
+   },
+   "kind": "aligned",
+   "seq": 8
+  },
+  {
+   "at": 1793124926.3990011,
+   "data": {
+    "source_rows": 86400,
+    "status": "aligned",
+    "table": "time_dim",
+    "target_rows": 86400,
+    "type_changes": 0
+   },
+   "kind": "aligned",
+   "seq": 9
+  },
+  {
+   "at": 1793124926.39954,
+   "data": {
+    "position": 0,
+    "query_id": "q3"
+   },
+   "kind": "judging",
+   "seq": 10
+  },
+  {
+   "at": 1793124930.6995358,
+   "data": {
+    "cause": null,
+    "note": "same answer on both engines",
+    "position": 0,
+    "query_id": "q3",
+    "verdict": "move"
+   },
+   "kind": "judged",
+   "seq": 11
+  },
+  {
+   "at": 1793124930.699848,
+   "data": {
+    "position": 1,
+    "query_id": "q42"
+   },
+   "kind": "judging",
+   "seq": 12
+  },
+  {
+   "at": 1793124933.7240698,
+   "data": {
+    "cause": null,
+    "note": "same answer on both engines",
+    "position": 1,
+    "query_id": "q42",
+    "verdict": "move"
+   },
+   "kind": "judged",
+   "seq": 13
+  },
+  {
+   "at": 1793124933.724511,
+   "data": {
+    "position": 2,
+    "query_id": "q52"
+   },
+   "kind": "judging",
+   "seq": 14
+  },
+  {
+   "at": 1793124936.565525,
+   "data": {
+    "cause": null,
+    "note": "same answer on both engines",
+    "position": 2,
+    "query_id": "q52",
+    "verdict": "move"
+   },
+   "kind": "judged",
+   "seq": 15
+  },
+  {
+   "at": 1793124936.5662909,
+   "data": {
+    "position": 3,
+    "query_id": "q55"
+   },
+   "kind": "judging",
+   "seq": 16
+  },
+  {
+   "at": 1793124939.424703,
+   "data": {
+    "cause": null,
+    "note": "same answer on both engines",
+    "position": 3,
+    "query_id": "q55",
+    "verdict": "move"
+   },
+   "kind": "judged",
+   "seq": 17
+  },
+  {
+   "at": 1793124939.425222,
+   "data": {
+    "position": 4,
+    "query_id": "q96"
+   },
+   "kind": "judging",
+   "seq": 18
+  },
+  {
+   "at": 1793124942.977778,
+   "data": {
+    "cause": null,
+    "note": "same answer on both engines",
+    "position": 4,
+    "query_id": "q96",
+    "verdict": "move"
+   },
+   "kind": "judged",
+   "seq": 19
+  },
+  {
+   "at": 1793124942.97897,
+   "data": {
+    "summary": {
+     "causes": {},
+     "movable": 5,
+     "movable_share": 1.0,
+     "queries": 5,
+     "source_ms": 8949.7,
+     "tables": 6,
+     "tables_retyped": 0,
+     "tables_usable": 6,
+     "target_ms": 6607.4,
+     "verdicts": {
+      "move": 5
+     }
+    }
+   },
+   "kind": "finished",
+   "seq": 20
+  }
+ ],
+ "format": "nirvana-recording/1",
+ "judgements": [
+  {
+   "cause": null,
+   "comparison": {
+    "column_count_equal": true,
+    "max_rel_gap": 0.0,
+    "mismatched_columns": [],
+    "only_in_source": 0,
+    "only_in_target": 0,
+    "ordered": true,
+    "ordered_equal": true,
+    "source_fp": "6a6290bd904e059ac130f5b1f9f9643dcc51a817a5a985a543c78ca58b0f40ff",
+    "source_rows": 89,
+    "status": "identical",
+    "target_fp": "6a6290bd904e059ac130f5b1f9f9643dcc51a817a5a985a543c78ca58b0f40ff",
+    "target_rows": 89,
+    "type_mismatches": []
+   },
+   "final_comparison": null,
+   "finished_at": 1793124930.698959,
+   "note": "same answer on both engines",
+   "query_id": "q3",
+   "rewritten_sql": null,
+   "sample": null,
+   "source_ms": 1775.2179999952205,
+   "source_sql": "SELECT dt.d_year, item.i_brand_id AS brand_id, item.i_brand AS brand, SUM(ss_ext_sales_price) AS sum_agg FROM workspace.nirvana_tpcds.date_dim AS dt CROSS JOIN workspace.nirvana_tpcds.store_sales CROSS JOIN workspace.nirvana_tpcds.item WHERE dt.d_date_sk = store_sales.ss_sold_date_sk AND store_sales.ss_item_sk = item.i_item_sk AND item.i_manufact_id = 128 AND dt.d_moy = 11 GROUP BY dt.d_year, item.i_brand, item.i_brand_id ORDER BY dt.d_year, sum_agg DESC, brand_id LIMIT 100",
+   "started_at": 1793124926.3999941,
+   "steps": [
+    {
+     "detail": "89 rows",
+     "engine": "databricks",
+     "fingerprint": "6a6290bd904e059ac130f5b1f9f9643dcc51a817a5a985a543c78ca58b0f40ff",
+     "ms": 1775.2179999952205,
+     "name": "source",
+     "ok": true,
+     "rows": 89,
+     "sql": "SELECT dt.d_year, item.i_brand_id AS brand_id, item.i_brand AS brand, SUM(ss_ext_sales_price) AS sum_agg FROM workspace.nirvana_tpcds.date_dim AS dt CROSS JOIN workspace.nirvana_tpcds.store_sales CROSS JOIN workspace.nirvana_tpcds.item WHERE dt.d_date_sk = store_sales.ss_sold_date_sk AND store_sales.ss_item_sk = item.i_item_sk AND item.i_manufact_id = 128 AND dt.d_moy = 11 GROUP BY dt.d_year, item.i_brand, item.i_brand_id ORDER BY dt.d_year, sum_agg DESC, brand_id LIMIT 100"
+    },
+    {
+     "detail": "89 rows",
+     "engine": "zetaris",
+     "fingerprint": "6a6290bd904e059ac130f5b1f9f9643dcc51a817a5a985a543c78ca58b0f40ff",
+     "ms": 2259.59404099558,
+     "name": "target",
+     "ok": true,
+     "rows": 89,
+     "sql": "SELECT dt.d_year, item.i_brand_id AS brand_id, item.i_brand AS brand, SUM(ss_ext_sales_price) AS sum_agg FROM NIRVANA_TPCDS.date_dim AS dt CROSS JOIN NIRVANA_TPCDS.store_sales CROSS JOIN NIRVANA_TPCDS.item WHERE dt.d_date_sk = store_sales.ss_sold_date_sk AND store_sales.ss_item_sk = item.i_item_sk AND item.i_manufact_id = 128 AND dt.d_moy = 11 GROUP BY dt.d_year, item.i_brand, item.i_brand_id ORDER BY dt.d_year, sum_agg DESC, brand_id LIMIT 100"
+    }
+   ],
+   "tables": [
+    "date_dim",
+    "item",
+    "store_sales"
+   ],
+   "target_ms": 2259.59404099558,
+   "target_sql": "SELECT dt.d_year, item.i_brand_id AS brand_id, item.i_brand AS brand, SUM(ss_ext_sales_price) AS sum_agg FROM NIRVANA_TPCDS.date_dim AS dt CROSS JOIN NIRVANA_TPCDS.store_sales CROSS JOIN NIRVANA_TPCDS.item WHERE dt.d_date_sk = store_sales.ss_sold_date_sk AND store_sales.ss_item_sk = item.i_item_sk AND item.i_manufact_id = 128 AND dt.d_moy = 11 GROUP BY dt.d_year, item.i_brand, item.i_brand_id ORDER BY dt.d_year, sum_agg DESC, brand_id LIMIT 100",
+   "verdict": "move"
+  },
+  {
+   "cause": null,
+   "comparison": {
+    "column_count_equal": true,
+    "max_rel_gap": 0.0,
+    "mismatched_columns": [],
+    "only_in_source": 0,
+    "only_in_target": 0,
+    "ordered": true,
+    "ordered_equal": true,
+    "source_fp": "560817afceb261ccf9e644349fd925dc055f5fc569545017120ca91291c0ba8e",
+    "source_rows": 10,
+    "status": "identical",
+    "target_fp": "560817afceb261ccf9e644349fd925dc055f5fc569545017120ca91291c0ba8e",
+    "target_rows": 10,
+    "type_mismatches": []
+   },
+   "final_comparison": null,
+   "finished_at": 1793124933.723465,
+   "note": "same answer on both engines",
+   "query_id": "q42",
+   "rewritten_sql": null,
+   "sample": null,
+   "source_ms": 1608.1690000064555,
+   "source_sql": "SELECT dt.d_year, item.i_category_id, item.i_category, SUM(ss_ext_sales_price) FROM workspace.nirvana_tpcds.date_dim AS dt CROSS JOIN workspace.nirvana_tpcds.store_sales CROSS JOIN workspace.nirvana_tpcds.item WHERE dt.d_date_sk = store_sales.ss_sold_date_sk AND store_sales.ss_item_sk = item.i_item_sk AND item.i_manager_id = 1 AND dt.d_moy = 11 AND dt.d_year = 2000 GROUP BY dt.d_year, item.i_category_id, item.i_category ORDER BY SUM(ss_ext_sales_price) DESC, dt.d_year, item.i_category_id, item.i_category LIMIT 100",
+   "started_at": 1793124930.7000582,
+   "steps": [
+    {
+     "detail": "10 rows",
+     "engine": "databricks",
+     "fingerprint": "560817afceb261ccf9e644349fd925dc055f5fc569545017120ca91291c0ba8e",
+     "ms": 1608.1690000064555,
+     "name": "source",
+     "ok": true,
+     "rows": 10,
+     "sql": "SELECT dt.d_year, item.i_category_id, item.i_category, SUM(ss_ext_sales_price) FROM workspace.nirvana_tpcds.date_dim AS dt CROSS JOIN workspace.nirvana_tpcds.store_sales CROSS JOIN workspace.nirvana_tpcds.item WHERE dt.d_date_sk = store_sales.ss_sold_date_sk AND store_sales.ss_item_sk = item.i_item_sk AND item.i_manager_id = 1 AND dt.d_moy = 11 AND dt.d_year = 2000 GROUP BY dt.d_year, item.i_category_id, item.i_category ORDER BY SUM(ss_ext_sales_price) DESC, dt.d_year, item.i_category_id, item.i_category LIMIT 100"
+    },
+    {
+     "detail": "10 rows",
+     "engine": "zetaris",
+     "fingerprint": "560817afceb261ccf9e644349fd925dc055f5fc569545017120ca91291c0ba8e",
+     "ms": 1199.9892909952905,
+     "name": "target",
+     "ok": true,
+     "rows": 10,
+     "sql": "SELECT dt.d_year, item.i_category_id, item.i_category, SUM(ss_ext_sales_price) FROM NIRVANA_TPCDS.date_dim AS dt CROSS JOIN NIRVANA_TPCDS.store_sales CROSS JOIN NIRVANA_TPCDS.item WHERE dt.d_date_sk = store_sales.ss_sold_date_sk AND store_sales.ss_item_sk = item.i_item_sk AND item.i_manager_id = 1 AND dt.d_moy = 11 AND dt.d_year = 2000 GROUP BY dt.d_year, item.i_category_id, item.i_category ORDER BY SUM(ss_ext_sales_price) DESC, dt.d_year, item.i_category_id, item.i_category LIMIT 100"
+    }
+   ],
+   "tables": [
+    "date_dim",
+    "item",
+    "store_sales"
+   ],
+   "target_ms": 1199.9892909952905,
+   "target_sql": "SELECT dt.d_year, item.i_category_id, item.i_category, SUM(ss_ext_sales_price) FROM NIRVANA_TPCDS.date_dim AS dt CROSS JOIN NIRVANA_TPCDS.store_sales CROSS JOIN NIRVANA_TPCDS.item WHERE dt.d_date_sk = store_sales.ss_sold_date_sk AND store_sales.ss_item_sk = item.i_item_sk AND item.i_manager_id = 1 AND dt.d_moy = 11 AND dt.d_year = 2000 GROUP BY dt.d_year, item.i_category_id, item.i_category ORDER BY SUM(ss_ext_sales_price) DESC, dt.d_year, item.i_category_id, item.i_category LIMIT 100",
+   "verdict": "move"
+  },
+  {
+   "cause": null,
+   "comparison": {
+    "column_count_equal": true,
+    "max_rel_gap": 0.0,
+    "mismatched_columns": [],
+    "only_in_source": 0,
+    "only_in_target": 0,
+    "ordered": true,
+    "ordered_equal": true,
+    "source_fp": "45332b1765b056b7fc255318fb7373ff3d392f72a926ced8f662feb30eabfc69",
+    "source_rows": 100,
+    "status": "identical",
+    "target_fp": "45332b1765b056b7fc255318fb7373ff3d392f72a926ced8f662feb30eabfc69",
+    "target_rows": 100,
+    "type_mismatches": []
+   },
+   "final_comparison": null,
+   "finished_at": 1793124936.56432,
+   "note": "same answer on both engines",
+   "query_id": "q52",
+   "rewritten_sql": null,
+   "sample": null,
+   "source_ms": 1527.724166000553,
+   "source_sql": "SELECT dt.d_year, item.i_brand_id AS brand_id, item.i_brand AS brand, SUM(ss_ext_sales_price) AS ext_price FROM workspace.nirvana_tpcds.date_dim AS dt CROSS JOIN workspace.nirvana_tpcds.store_sales CROSS JOIN workspace.nirvana_tpcds.item WHERE dt.d_date_sk = store_sales.ss_sold_date_sk AND store_sales.ss_item_sk = item.i_item_sk AND item.i_manager_id = 1 AND dt.d_moy = 11 AND dt.d_year = 2000 GROUP BY dt.d_year, item.i_brand, item.i_brand_id ORDER BY dt.d_year, ext_price DESC, brand_id LIMIT 100",
+   "started_at": 1793124933.724936,
+   "steps": [
+    {
+     "detail": "100 rows",
+     "engine": "databricks",
+     "fingerprint": "45332b1765b056b7fc255318fb7373ff3d392f72a926ced8f662feb30eabfc69",
+     "ms": 1527.724166000553,
+     "name": "source",
+     "ok": true,
+     "rows": 100,
+     "sql": "SELECT dt.d_year, item.i_brand_id AS brand_id, item.i_brand AS brand, SUM(ss_ext_sales_price) AS ext_price FROM workspace.nirvana_tpcds.date_dim AS dt CROSS JOIN workspace.nirvana_tpcds.store_sales CROSS JOIN workspace.nirvana_tpcds.item WHERE dt.d_date_sk = store_sales.ss_sold_date_sk AND store_sales.ss_item_sk = item.i_item_sk AND item.i_manager_id = 1 AND dt.d_moy = 11 AND dt.d_year = 2000 GROUP BY dt.d_year, item.i_brand, item.i_brand_id ORDER BY dt.d_year, ext_price DESC, brand_id LIMIT 100"
+    },
+    {
+     "detail": "100 rows",
+     "engine": "zetaris",
+     "fingerprint": "45332b1765b056b7fc255318fb7373ff3d392f72a926ced8f662feb30eabfc69",
+     "ms": 1125.9264170003007,
+     "name": "target",
+     "ok": true,
+     "rows": 100,
+     "sql": "SELECT dt.d_year, item.i_brand_id AS brand_id, item.i_brand AS brand, SUM(ss_ext_sales_price) AS ext_price FROM NIRVANA_TPCDS.date_dim AS dt CROSS JOIN NIRVANA_TPCDS.store_sales CROSS JOIN NIRVANA_TPCDS.item WHERE dt.d_date_sk = store_sales.ss_sold_date_sk AND store_sales.ss_item_sk = item.i_item_sk AND item.i_manager_id = 1 AND dt.d_moy = 11 AND dt.d_year = 2000 GROUP BY dt.d_year, item.i_brand, item.i_brand_id ORDER BY dt.d_year, ext_price DESC, brand_id LIMIT 100"
+    }
+   ],
+   "tables": [
+    "date_dim",
+    "item",
+    "store_sales"
+   ],
+   "target_ms": 1125.9264170003007,
+   "target_sql": "SELECT dt.d_year, item.i_brand_id AS brand_id, item.i_brand AS brand, SUM(ss_ext_sales_price) AS ext_price FROM NIRVANA_TPCDS.date_dim AS dt CROSS JOIN NIRVANA_TPCDS.store_sales CROSS JOIN NIRVANA_TPCDS.item WHERE dt.d_date_sk = store_sales.ss_sold_date_sk AND store_sales.ss_item_sk = item.i_item_sk AND item.i_manager_id = 1 AND dt.d_moy = 11 AND dt.d_year = 2000 GROUP BY dt.d_year, item.i_brand, item.i_brand_id ORDER BY dt.d_year, ext_price DESC, brand_id LIMIT 100",
+   "verdict": "move"
+  },
+  {
+   "cause": null,
+   "comparison": {
+    "column_count_equal": true,
+    "max_rel_gap": 0.0,
+    "mismatched_columns": [],
+    "only_in_source": 0,
+    "only_in_target": 0,
+    "ordered": true,
+    "ordered_equal": true,
+    "source_fp": "25d71b131dec612941454fe98dfe25feae98774ec406307e81c1b17542ebde8e",
+    "source_rows": 100,
+    "status": "identical",
+    "target_fp": "25d71b131dec612941454fe98dfe25feae98774ec406307e81c1b17542ebde8e",
+    "target_rows": 100,
+    "type_mismatches": []
+   },
+   "final_comparison": null,
+   "finished_at": 1793124939.42407,
+   "note": "same answer on both engines",
+   "query_id": "q55",
+   "rewritten_sql": null,
+   "sample": null,
+   "source_ms": 2067.7817499963567,
+   "source_sql": "SELECT i_brand_id AS brand_id, i_brand AS brand, SUM(ss_ext_sales_price) AS ext_price FROM workspace.nirvana_tpcds.date_dim CROSS JOIN workspace.nirvana_tpcds.store_sales CROSS JOIN workspace.nirvana_tpcds.item WHERE d_date_sk = ss_sold_date_sk AND ss_item_sk = i_item_sk AND i_manager_id = 28 AND d_moy = 11 AND d_year = 1999 GROUP BY i_brand, i_brand_id ORDER BY ext_price DESC, brand_id LIMIT 100",
+   "started_at": 1793124936.566835,
+   "steps": [
+    {
+     "detail": "100 rows",
+     "engine": "databricks",
+     "fingerprint": "25d71b131dec612941454fe98dfe25feae98774ec406307e81c1b17542ebde8e",
+     "ms": 2067.7817499963567,
+     "name": "source",
+     "ok": true,
+     "rows": 100,
+     "sql": "SELECT i_brand_id AS brand_id, i_brand AS brand, SUM(ss_ext_sales_price) AS ext_price FROM workspace.nirvana_tpcds.date_dim CROSS JOIN workspace.nirvana_tpcds.store_sales CROSS JOIN workspace.nirvana_tpcds.item WHERE d_date_sk = ss_sold_date_sk AND ss_item_sk = i_item_sk AND i_manager_id = 28 AND d_moy = 11 AND d_year = 1999 GROUP BY i_brand, i_brand_id ORDER BY ext_price DESC, brand_id LIMIT 100"
+    },
+    {
+     "detail": "100 rows",
+     "engine": "zetaris",
+     "fingerprint": "25d71b131dec612941454fe98dfe25feae98774ec406307e81c1b17542ebde8e",
+     "ms": 678.8327089961967,
+     "name": "target",
+     "ok": true,
+     "rows": 100,
+     "sql": "SELECT i_brand_id AS brand_id, i_brand AS brand, SUM(ss_ext_sales_price) AS ext_price FROM NIRVANA_TPCDS.date_dim CROSS JOIN NIRVANA_TPCDS.store_sales CROSS JOIN NIRVANA_TPCDS.item WHERE d_date_sk = ss_sold_date_sk AND ss_item_sk = i_item_sk AND i_manager_id = 28 AND d_moy = 11 AND d_year = 1999 GROUP BY i_brand, i_brand_id ORDER BY ext_price DESC, brand_id LIMIT 100"
+    }
+   ],
+   "tables": [
+    "date_dim",
+    "item",
+    "store_sales"
+   ],
+   "target_ms": 678.8327089961967,
+   "target_sql": "SELECT i_brand_id AS brand_id, i_brand AS brand, SUM(ss_ext_sales_price) AS ext_price FROM NIRVANA_TPCDS.date_dim CROSS JOIN NIRVANA_TPCDS.store_sales CROSS JOIN NIRVANA_TPCDS.item WHERE d_date_sk = ss_sold_date_sk AND ss_item_sk = i_item_sk AND i_manager_id = 28 AND d_moy = 11 AND d_year = 1999 GROUP BY i_brand, i_brand_id ORDER BY ext_price DESC, brand_id LIMIT 100",
+   "verdict": "move"
+  },
+  {
+   "cause": null,
+   "comparison": {
+    "column_count_equal": true,
+    "max_rel_gap": 0.0,
+    "mismatched_columns": [],
+    "only_in_source": 0,
+    "only_in_target": 0,
+    "ordered": true,
+    "ordered_equal": true,
+    "source_fp": "f053996f6f017d2c6c42107989e242d1effd3fad5a7bfd937dd5cca89ee26ea5",
+    "source_rows": 1,
+    "status": "identical",
+    "target_fp": "f053996f6f017d2c6c42107989e242d1effd3fad5a7bfd937dd5cca89ee26ea5",
+    "target_rows": 1,
+    "type_mismatches": []
+   },
+   "final_comparison": null,
+   "finished_at": 1793124942.9771872,
+   "note": "same answer on both engines",
+   "query_id": "q96",
+   "rewritten_sql": null,
+   "sample": null,
+   "source_ms": 1970.8084160010912,
+   "source_sql": "SELECT COUNT(*) FROM workspace.nirvana_tpcds.store_sales CROSS JOIN workspace.nirvana_tpcds.household_demographics CROSS JOIN workspace.nirvana_tpcds.time_dim CROSS JOIN workspace.nirvana_tpcds.store WHERE ss_sold_time_sk = time_dim.t_time_sk AND ss_hdemo_sk = household_demographics.hd_demo_sk AND ss_store_sk = s_store_sk AND time_dim.t_hour = 20 AND time_dim.t_minute >= 30 AND household_demographics.hd_dep_count = 7 AND store.s_store_name = 'ese' ORDER BY COUNT(*) LIMIT 100",
+   "started_at": 1793124939.425618,
+   "steps": [
+    {
+     "detail": "1 rows",
+     "engine": "databricks",
+     "fingerprint": "f053996f6f017d2c6c42107989e242d1effd3fad5a7bfd937dd5cca89ee26ea5",
+     "ms": 1970.8084160010912,
+     "name": "source",
+     "ok": true,
+     "rows": 1,
+     "sql": "SELECT COUNT(*) FROM workspace.nirvana_tpcds.store_sales CROSS JOIN workspace.nirvana_tpcds.household_demographics CROSS JOIN workspace.nirvana_tpcds.time_dim CROSS JOIN workspace.nirvana_tpcds.store WHERE ss_sold_time_sk = time_dim.t_time_sk AND ss_hdemo_sk = household_demographics.hd_demo_sk AND ss_store_sk = s_store_sk AND time_dim.t_hour = 20 AND time_dim.t_minute >= 30 AND household_demographics.hd_dep_count = 7 AND store.s_store_name = 'ese' ORDER BY COUNT(*) LIMIT 100"
+    },
+    {
+     "detail": "1 rows",
+     "engine": "zetaris",
+     "fingerprint": "f053996f6f017d2c6c42107989e242d1effd3fad5a7bfd937dd5cca89ee26ea5",
+     "ms": 1343.0917500008945,
+     "name": "target",
+     "ok": true,
+     "rows": 1,
+     "sql": "SELECT COUNT(*) FROM NIRVANA_TPCDS.store_sales CROSS JOIN NIRVANA_TPCDS.household_demographics CROSS JOIN NIRVANA_TPCDS.time_dim CROSS JOIN NIRVANA_TPCDS.store WHERE ss_sold_time_sk = time_dim.t_time_sk AND ss_hdemo_sk = household_demographics.hd_demo_sk AND ss_store_sk = s_store_sk AND time_dim.t_hour = 20 AND time_dim.t_minute >= 30 AND household_demographics.hd_dep_count = 7 AND store.s_store_name = 'ese' ORDER BY COUNT(*) LIMIT 100"
+    }
+   ],
+   "tables": [
+    "household_demographics",
+    "store",
+    "store_sales",
+    "time_dim"
+   ],
+   "target_ms": 1343.0917500008945,
+   "target_sql": "SELECT COUNT(*) FROM NIRVANA_TPCDS.store_sales CROSS JOIN NIRVANA_TPCDS.household_demographics CROSS JOIN NIRVANA_TPCDS.time_dim CROSS JOIN NIRVANA_TPCDS.store WHERE ss_sold_time_sk = time_dim.t_time_sk AND ss_hdemo_sk = household_demographics.hd_demo_sk AND ss_store_sk = s_store_sk AND time_dim.t_hour = 20 AND time_dim.t_minute >= 30 AND household_demographics.hd_dep_count = 7 AND store.s_store_name = 'ese' ORDER BY COUNT(*) LIMIT 100",
+   "verdict": "move"
+  }
+ ],
+ "receipt": {
+  "receipt": {
+   "alignment": [
+    {
+     "source_rows": 73049,
+     "status": "aligned",
+     "table": "date_dim",
+     "target_rows": 73049
+    },
+    {
+     "source_rows": 7200,
+     "status": "aligned",
+     "table": "household_demographics",
+     "target_rows": 7200
+    },
+    {
+     "source_rows": 18000,
+     "status": "aligned",
+     "table": "item",
+     "target_rows": 18000
+    },
+    {
+     "source_rows": 12,
+     "status": "aligned",
+     "table": "store",
+     "target_rows": 12
+    },
+    {
+     "source_rows": 2880404,
+     "status": "aligned",
+     "table": "store_sales",
+     "target_rows": 2880404
+    },
+    {
+     "source_rows": 86400,
+     "status": "aligned",
+     "table": "time_dim",
+     "target_rows": 86400
+    }
+   ],
+   "created_at": 1793124876.4132302,
+   "finished_at": 1793124942.978733,
+   "items": [
+    {
+     "cause": null,
+     "final_target_fp": null,
+     "query_id": "q3",
+     "rewrite_sha256": null,
+     "source_fp": "6a6290bd904e059ac130f5b1f9f9643dcc51a817a5a985a543c78ca58b0f40ff",
+     "source_sql_sha256": "cb407a65440528d2f1f57cb10881f69d322b7fcb2fb67b17d627e83b3245b893",
+     "target_fp": "6a6290bd904e059ac130f5b1f9f9643dcc51a817a5a985a543c78ca58b0f40ff",
+     "target_sql_sha256": "0d8be0d973c7af0b0535560e7890b32a41b0f523bfbb822d7a0526e793219282",
+     "verdict": "move"
+    },
+    {
+     "cause": null,
+     "final_target_fp": null,
+     "query_id": "q42",
+     "rewrite_sha256": null,
+     "source_fp": "560817afceb261ccf9e644349fd925dc055f5fc569545017120ca91291c0ba8e",
+     "source_sql_sha256": "4e3edbde61ee8629dda8f79f235e4c079ddf70e12c23a3073b01fc23c3c3d94c",
+     "target_fp": "560817afceb261ccf9e644349fd925dc055f5fc569545017120ca91291c0ba8e",
+     "target_sql_sha256": "3b458e6675e8ff205e87dec883e53432f047005e45ba50d8b79feb136b5bc981",
+     "verdict": "move"
+    },
+    {
+     "cause": null,
+     "final_target_fp": null,
+     "query_id": "q52",
+     "rewrite_sha256": null,
+     "source_fp": "45332b1765b056b7fc255318fb7373ff3d392f72a926ced8f662feb30eabfc69",
+     "source_sql_sha256": "1df5f20fd222dd8ed9cb281364b624a59e2bd90399fedfbcce7b93b4abec4abf",
+     "target_fp": "45332b1765b056b7fc255318fb7373ff3d392f72a926ced8f662feb30eabfc69",
+     "target_sql_sha256": "0354094874bec6fc0c4bffe2f8e1a44729395d4ce490a1e50d30325e9eee9791",
+     "verdict": "move"
+    },
+    {
+     "cause": null,
+     "final_target_fp": null,
+     "query_id": "q55",
+     "rewrite_sha256": null,
+     "source_fp": "25d71b131dec612941454fe98dfe25feae98774ec406307e81c1b17542ebde8e",
+     "source_sql_sha256": "f4ea113b8f39e409cef423836efc7ba7ccb49a9a3e8d305202d16794125a8ff8",
+     "target_fp": "25d71b131dec612941454fe98dfe25feae98774ec406307e81c1b17542ebde8e",
+     "target_sql_sha256": "cbecfc9603b0650cd0638e5b769f24de918a3c50b07d9cda94b71e5cf948579b",
+     "verdict": "move"
+    },
+    {
+     "cause": null,
+     "final_target_fp": null,
+     "query_id": "q96",
+     "rewrite_sha256": null,
+     "source_fp": "f053996f6f017d2c6c42107989e242d1effd3fad5a7bfd937dd5cca89ee26ea5",
+     "source_sql_sha256": "9dcf45b21b5d8b700a0d74ce9753cb710436be2bfea744b03abef08ec1d257bb",
+     "target_fp": "f053996f6f017d2c6c42107989e242d1effd3fad5a7bfd937dd5cca89ee26ea5",
+     "target_sql_sha256": "ebc4bfd9262760ab74b2b57c7fed77383b70892f36340e02b78b1a496bc5a67c",
+     "verdict": "move"
+    }
+   ],
+   "mode": "live",
+   "run_id": "run-20261027-181436-837860",
+   "source": {
+    "dialect": "databricks",
+    "host": "https://dbc-0a0ccad0-ea59.cloud.databricks.com",
+    "location": "workspace.nirvana_tpcds",
+    "name": "databricks",
+    "warehouse_id": "c05427eb43e21fad"
+   },
+   "target": {
+    "dialect": "spark",
+    "location": "NIRVANA_TPCDS",
+    "name": "zetaris",
+    "rest_url": "http://localhost:8888/api/v1.0"
+   }
+  },
+  "sha256": "8893ca137198fd0a89ddd57ecde2ca9f49606478726d3d12af33451ee919851f"
+ },
+ "run": {
+  "created_at": 1793124876.4132302,
+  "error": null,
+  "finished_at": 1793124942.978733,
+  "id": "run-20261027-181436-837860",
+  "mode": "live",
+  "query_ids": [
+   "q3",
+   "q42",
+   "q52",
+   "q55",
+   "q96"
+  ],
+  "recorded": false,
+  "source": {
+   "dialect": "databricks",
+   "host": "https://dbc-0a0ccad0-ea59.cloud.databricks.com",
+   "location": "workspace.nirvana_tpcds",
+   "name": "databricks",
+   "warehouse_id": "c05427eb43e21fad"
+  },
+  "status": "done",
+  "summary": {
+   "causes": {},
+   "movable": 5,
+   "movable_share": 1.0,
+   "queries": 5,
+   "source_ms": 8949.7,
+   "tables": 6,
+   "tables_retyped": 0,
+   "tables_usable": 6,
+   "target_ms": 6607.4,
+   "verdicts": {
+    "move": 5
+   }
+  },
+  "target": {
+   "dialect": "spark",
+   "location": "NIRVANA_TPCDS",
+   "name": "zetaris",
+   "rest_url": "http://localhost:8888/api/v1.0"
+  }
+ }
+}
