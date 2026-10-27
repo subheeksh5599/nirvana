@@ -28,6 +28,7 @@ from . import __version__
 from . import workload as wl
 from .config import Settings, load_env_file, settings as read_settings
 from .engines import Engine, build
+from .federate import DiffStore, row_diff
 from .ledger import Ledger
 from .runner import Run, load_recordings
 
@@ -39,6 +40,13 @@ class RunRequest(BaseModel):
     queries: list[str] | None = Field(None, description="query ids; all 103 when omitted")
     use_model: bool = Field(True, description="ask the Meterless runtime for a rewrite when the rules find none")
     use_memory: bool = Field(True, description="recall and store proven fixes in H-MEM")
+
+
+class DiffRequest(BaseModel):
+    table: str = Field(..., description="a TPC-DS table name")
+    reference: str = Field(..., description="the Zetaris database holding the copy the source was loaded from")
+    candidate: str = Field(..., description="the Zetaris database holding the copy to check")
+    sample: int = Field(5, ge=0, le=50)
 
 
 class State:
@@ -253,6 +261,28 @@ def create_app(s: Settings | None = None, mode: str | None = None) -> FastAPI:
     def recording(run_id: str):
         get_run(run_id)
         return JSONResponse(state.ledger.export(run_id), headers={"Content-Disposition": f'attachment; filename="{run_id}.json"'})
+
+    diffs = DiffStore(s.recordings_dir / "row-diffs.jsonl")
+
+    @app.get("/api/diffs")
+    def list_diffs():
+        return diffs.latest()
+
+    @app.post("/api/diffs")
+    def run_diff(req: DiffRequest):
+        if state.mode != "live":
+            raise HTTPException(409, "this server only serves recorded results; start it in live mode with Zetaris running")
+        if req.table not in wl.TPCDS_TABLES:
+            raise HTTPException(400, f"unknown table {req.table}")
+        try:
+            z = build("zetaris", s, role="target")
+        except ValueError as e:
+            raise HTTPException(400, f"Zetaris not configured: {e}")
+        d = row_diff(z, req.table, req.reference, req.candidate, sample=req.sample)
+        if d.error and d.error.startswith("not a plain identifier"):
+            raise HTTPException(400, d.error)
+        diffs.save(d)
+        return d.as_dict()
 
     @app.get("/api/memory")
     def memory(q: str = "status:different", top: int = 10):
