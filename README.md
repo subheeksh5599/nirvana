@@ -42,10 +42,51 @@ different input tables                                                          
 
 Every migration tool answers "did the data copy over?". The question a team actually signs off on is different: **does every report still give the same number on the new engine?** Two engines can hold identical tables and still answer differently. Integer division, NULL placement, a column a CSV loader turned from DECIMAL into DOUBLE, a LIMIT that cuts through tied rows: each one returns plausible numbers that are wrong. Nirvana finds those cases before cutover, names the cause, and keeps a rewrite only if executing it reproduces the source's rows. The language model can propose SQL. It never decides a verdict.
 
+## How we used every sponsor, in plain words
+
+Short version: **Zetaris is where the queries run, Meterless is the memory and the AI connection, NVIDIA is the AI model.** Each one does a job Nirvana cannot do without it. The detailed, file-by-file version is in [Where each sponsor technology is load-bearing](#where-each-sponsor-technology-is-load-bearing).
+
+### Zetaris: the engine being tested, and the data layer
+
+Imagine a company that wants to move its reports from Databricks to Zetaris. Before it does, it needs to know that every report will still give the same answer on Zetaris. Nirvana checks exactly that, so **Zetaris is one of the two engines in every single check**.
+
+What Zetaris actually does in Nirvana:
+
+1. **Holds the data.** We point Zetaris at the 24 TPC-DS data files (parquet) and register each one as a table with `CREATE LIGHTNING FILESTORE TABLE`. Zetaris reads the files where they are. Nothing is copied or converted first. That is the "data layer" part: Zetaris is how Nirvana reaches the data.
+2. **Answers the table checks.** Before any query is compared, Nirvana asks both engines to describe every table: how many rows, and for each column the smallest value, the largest value, the exact total and how many values are filled in. If Zetaris and Databricks disagree about a table, every query that reads it is set aside as "blocked" instead of being judged on bad input.
+3. **Runs all 103 queries.** Each query is sent to Zetaris through its REST SQL endpoint (`/sql-editor/sqls/run`) with an API key, and the rows it returns are compared with Databricks' rows, value by value.
+4. **Runs every fix.** When the answers differ, every candidate fix is run *on Zetaris*. A fix is kept only if Zetaris then returns exactly the same rows as Databricks.
+5. **Describes its own results.** When Zetaris returns rows without column types, Nirvana asks Zetaris itself with `INFER SQLTABLE COLUMNS`, so a number is compared as a number and a date as a date.
+
+Something Zetaris helped us find on day one: the TPC-DS sample that ships with the Zetaris platform (`TPCDS_DB`) is not the same data as Databricks' own TPC-DS sample. Seven of the 24 tables have different row counts (for example `catalog_page`: 11,718 rows on Databricks, 311,718 on Zetaris). Nirvana's table check caught this before a single query ran, which is exactly the mistake it exists to prevent. For the real run we put the same files on both engines.
+
+### Meterless: memory (H-MEM) and the AI connection (Nightshift)
+
+Meterless gives Nirvana two things.
+
+**H-MEM, the memory engine.** Every time a fix is proven, Nirvana writes a memory into H-MEM: what was wrong, which fix worked, and what the query looked like (does it divide numbers, does it read columns whose type changed, did the row count differ). The next time a query with the same look comes along, Nirvana asks H-MEM first and tries the fixes it remembers before anything else. If a remembered fix does not work this time, Nirvana tells H-MEM it was not helpful, and H-MEM trusts it less from then on. So the more Nirvana runs, the faster it finds the right fix. We use the H-MEM engine exactly as Meterless publishes it (copied unchanged into `vendor/meterless/hmem/`) and talk to it through a small bridge (`bridges/hmem.ts`). You can see what it has learned on the dashboard's Memory page.
+
+**Nightshift, the AI provider.** Nightshift is Meterless' desktop app. It gives every app on the computer one address for AI requests (`http://127.0.0.1:8088/v1`). Nirvana sends *all* of its AI requests there and nowhere else, following Meterless' provider rules (the right headers, the access token from Nightshift's own folder, checking which models it offers before asking). Inside Nightshift we connected OpenRouter in the Providers tab. We did **not** download or run any model on the laptop: Nirvana only accepts a free, cloud-relayed model from Nightshift's list and refuses local ones in code (`relayed_nemotron` in `src/nirvana/meterless.py`).
+
+### NVIDIA: the Nemotron model
+
+Most differences between two engines have a known cause, and Nirvana has fixed rules for those (a number stored with the wrong type, whole-number division, empty values sorted to the other end, ties at a LIMIT). When none of the rules explains a difference, Nirvana asks **NVIDIA Nemotron** (`nvidia/nemotron-3-ultra-550b-a55b`, the free version, reached through Nightshift) to suggest a rewritten query. It sends only the query text and a description of what differs, never the data itself.
+
+The important part: **Nemotron only suggests. It never decides.** Its suggestion is run on Zetaris like any other fix, and it is kept only if the rows come out identical to Databricks'. A suggestion that looks right but gives different rows is thrown away (`test_wrong_advisor_rewrite_is_refused`). If the model is slow or offline, the query simply stays on Databricks; nothing is guessed.
+
+### Databricks (not a sponsor)
+
+Databricks is the "before" side: the engine the company is moving away from. Its answers are the reference that Zetaris must match. We used the free Databricks Free Edition, with the same TPC-DS files uploaded to it (`scripts/load_databricks.py`).
+
+### What we did not use
+
+SpaceXAI's coding agents were withdrawn from the event by the organisers, so they are not part of this build.
+
 ## Table of contents
 
 - [Live status](#live-status)
 - [The 20-second pitch](#the-20-second-pitch)
+- [How we used every sponsor, in plain words](#how-we-used-every-sponsor-in-plain-words)
 - [See it in one command](#-see-it-in-one-command)
 - [Verify every claim in one command](#verify-every-claim-in-one-command)
 - [What Nirvana is NOT](#what-nirvana-is-not)
