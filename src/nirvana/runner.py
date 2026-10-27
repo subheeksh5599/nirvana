@@ -38,7 +38,12 @@ class Run:
         max_rows: int = 100_000,
         run_id: str | None = None,
         recordings_dir: Path | None = None,
+        explained: dict[str, dict[str, Any]] | None = None,
     ) -> None:
+        # table -> {"columns": [...], "repairs": {col: expr}, "investigation": id}: the
+        # agent's proven findings. A blocked table is used only when they cover every
+        # column its alignment flagged.
+        self.explained = {k.lower(): v for k, v in (explained or {}).items()}
         self.ledger, self.source, self.target, self.queries = ledger, source, target, queries
         self.mode, self.advisor, self.memory, self.max_rows = mode, advisor, memory, max_rows
         self.id = run_id or new_run_id()
@@ -81,11 +86,17 @@ class Run:
             if self._cancel.is_set():
                 return self._cancelled()
             a = align_table(self.source, self.target, t)
+            ex = self.explained.get(t.lower())
+            if a.status == "not_aligned" and ex and a.differences and not a.error:
+                flagged = {d["measure"].split(".", 1)[0].lower() for d in a.differences}
+                if flagged <= {c.lower() for c in ex.get("columns", [])}:
+                    a.status = "explained"
             alignment[t] = a
             self.ledger.put_alignment(self.id, a.as_dict())
             self.event("aligned", table=t, status=a.status, source_rows=a.source_rows, target_rows=a.target_rows, type_changes=len(a.type_changes))
 
-        judge = Judge(self.source, self.target, alignment=alignment, advisor=self.advisor, memory=self.memory, max_rows=self.max_rows)
+        repairs = {c: e for t, ex in self.explained.items() if t in alignment and alignment[t].status == "explained" for c, e in (ex.get("repairs") or {}).items()}
+        judge = Judge(self.source, self.target, alignment=alignment, advisor=self.advisor, memory=self.memory, max_rows=self.max_rows, repairs=repairs)
         for i, q in enumerate(self.queries):
             if self._cancel.is_set():
                 return self._cancelled()

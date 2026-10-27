@@ -90,7 +90,7 @@ class TableAlignment:
 
     @property
     def usable(self) -> bool:
-        return self.status in ("aligned", "aligned_types")
+        return self.status in ("aligned", "aligned_types", "explained")
 
     def as_dict(self) -> dict[str, Any]:
         return {
