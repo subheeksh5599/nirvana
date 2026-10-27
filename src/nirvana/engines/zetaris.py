@@ -78,8 +78,10 @@ class ZetarisEngine(Engine):
         *,
         transport: httpx.BaseTransport | None = None,
         timeout_seconds: float = 900.0,
+        infer_types: bool = True,
     ) -> None:
         super().__init__(location)
+        self.infer_types = infer_types
         if not api_key:
             raise ValueError("Zetaris needs an API key (create one in the Zetaris GUI)")
         if not str(org_id).isdigit():
@@ -118,6 +120,12 @@ class ZetarisEngine(Engine):
             raise EngineError(self.name, str(e), sql=sql) from e
         truncated = len(rows) > max_rows
         rows = rows[:max_rows]
+        type_source = "response"
+        if types is None and names and self.infer_types and not sql.lstrip().upper().startswith("INFER "):
+            types = self.output_types(sql, len(names))
+            type_source = "infer_sqltable" if types is not None else "values"
+        elif types is None:
+            type_source = "values"
         return ResultSet.build(
             self.name,
             sql,
@@ -125,5 +133,20 @@ class ZetarisEngine(Engine):
             rows,
             elapsed_ms=t.ms,
             truncated=truncated,
-            meta={"types_inferred": types is None},
+            meta={"types_inferred": type_source == "values", "type_source": type_source},
         )
+
+    def output_types(self, sql: str, width: int) -> list[str] | None:
+        """Output column types from Lightning's own ``INFER SQLTABLE COLUMNS SPEC <query>``,
+        used when the SQL endpoint returns rows without types. None when it is not available
+        (it needs the Data Pipeline Write privilege) or does not return one type per column."""
+        try:
+            rs = self.run("INFER SQLTABLE COLUMNS SPEC " + sql.strip().rstrip(";"), max_rows=10_000)
+        except EngineError:
+            return None
+        lower = [c.name.lower() for c in rs.columns]
+        t_idx = next((i for i, n in enumerate(lower) if "type" in n), None)
+        if t_idx is None:
+            return None
+        found = [str(r[t_idx]).lower() for r in rs.rows if r[t_idx] is not None]
+        return found if len(found) == width else None

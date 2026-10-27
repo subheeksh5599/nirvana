@@ -210,9 +210,51 @@ def test_zetaris_payload_errors(payload):
 
 
 def test_zetaris_inferred_types_marked():
-    rs = zet(lambda r: httpx.Response(200, json={"data": [[1, 2.5, "x", None]]})).run("q")
+    def handler(req):
+        if json.loads(req.content)["sql"].startswith("INFER"):
+            return httpx.Response(403, text="needs Data Pipeline Write")
+        return httpx.Response(200, json={"data": [[1, 2.5, "x", None]]})
+
+    rs = zet(handler).run("q")
     assert [c.type for c in rs.columns] == ["bigint", "double", "string", "string"]
-    assert rs.meta["types_inferred"] is True
+    assert rs.meta["types_inferred"] is True and rs.meta["type_source"] == "values"
+
+
+def test_zetaris_types_from_infer_sqltable_columns():
+    sent = []
+
+    def handler(req):
+        sql = json.loads(req.content)["sql"]
+        sent.append(sql)
+        if sql.startswith("INFER SQLTABLE COLUMNS SPEC "):
+            return httpx.Response(200, json={"data": [["a", "t.a", "decimal(7,2)"], ["b", "t.b", "int"]], "columns": ["name", "source", "dataType"]})
+        return httpx.Response(200, json={"data": [["1.50", 2]], "columns": ["a", "b"]})
+
+    rs = zet(handler).run("SELECT a, b FROM t;")
+    assert sent == ["SELECT a, b FROM t;", "INFER SQLTABLE COLUMNS SPEC SELECT a, b FROM t"]
+    assert [c.type for c in rs.columns] == ["decimal(7,2)", "int"]
+    assert rs.meta == {"types_inferred": False, "type_source": "infer_sqltable"}
+
+
+def test_zetaris_infer_with_wrong_width_falls_back():
+    def handler(req):
+        if json.loads(req.content)["sql"].startswith("INFER"):
+            return httpx.Response(200, json={"data": [["a", "int"]], "columns": ["name", "type"]})
+        return httpx.Response(200, json={"data": [[1, 2]], "columns": ["a", "b"]})
+
+    rs = zet(handler).run("q")
+    assert rs.meta["type_source"] == "values"
+
+
+def test_zetaris_infer_can_be_turned_off():
+    calls = []
+
+    def handler(req):
+        calls.append(1)
+        return httpx.Response(200, json={"data": [[1]], "columns": ["a"]})
+
+    e = ZetarisEngine("k", "1", transport=httpx.MockTransport(handler), infer_types=False)
+    assert e.run("q").meta["type_source"] == "values" and len(calls) == 1
 
 
 def test_zetaris_engine_error_text_kept():
