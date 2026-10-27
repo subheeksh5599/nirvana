@@ -106,6 +106,19 @@ class HMemMemory:
                 return True
         return False
 
+    def remember_finding(self, text: str, tags: list[str]) -> None:
+        """A finding the investigating agent proved, for the next investigation to start from."""
+        self._call("add", content=text, tags=["kind:finding", *tags], source="nirvana-agent", confidence=0.9)
+
+    def recall_findings(self, text: str, top: int = 5) -> list[dict[str, Any]]:
+        res = self._call("query", text=text, topN=top * 3, threshold=self.threshold)
+        out = []
+        for m in res.get("memories", []):
+            if "kind:finding" in m.get("tags", []):
+                out.append({"id": m.get("id"), "content": m.get("content"), "tags": m.get("tags", []), "relevance": m.get("relevance")})
+                self._call("feedback", memoryId=m["id"], kind="helpful")
+        return out[:top]
+
     def forget_failed(self) -> None:
         """Recalled fixes that were tried and did not prove the cause lose trust."""
         for ids in self._recalled.values():
