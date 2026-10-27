@@ -257,10 +257,23 @@ At the very end, and only as a proposer. When every rule has failed, `ModelAdvis
 
 | Sponsor | What it does in Nirvana | Remove it and… |
 |---|---|---|
-| **Zetaris** | The target engine. It reads the workload's tables in place through Lightning, and every query, alignment profile and rewrite runs on it through the REST SQL endpoint (`engines/zetaris.py`). | there is no second engine to compare against, so there is no product |
-| **Meterless** | H-MEM (the reference engine, vendored unchanged) holds every proven fix with its trust ledger. The provider contract 0.90.0 (URL normalisation, `meterless-app` and `meterless-scope` headers, status by `/v1/models`, auto-detect on 8088/8090/8787/11434) carries the model calls. | fixes are rediscovered on every query, and the model has no route |
-| **NVIDIA Nemotron** | The model behind the Meterless runtime that proposes rewrites for differences no rule explains. It runs locally, so no query text leaves the machine. | unexplained differences end in `keep` with no second opinion |
+| **Zetaris** (data layer) | The target engine. The 24 TPC-DS parquet files are registered as Lightning filestore tables (`CREATE LIGHTNING FILESTORE TABLE … FORMAT parquet`, `scripts/load_zetaris.py`) and read in place, with no load step. Every query, alignment profile and rewrite runs on it through the REST SQL endpoint (`engines/zetaris.py`). Untyped results are typed with `INFER SQLTABLE COLUMNS`. | there is no second engine to compare against, so there is no product |
+| **Meterless H-MEM** (engine) | Holds every proven fix with its trust ledger. When a rewrite reproduces the source's rows, the judge writes the cause and the rewrite name to H-MEM with the query's features as tags (`status:different`, `has_division`, `reads_retyped_columns`). On the next query with matching features, the recalled fixes are tried first, and a recalled fix that fails is marked `not_helpful`, so its confidence drops (`memory.py`, `bridges/hmem.ts`). | fixes are rediscovered on every query, in catalogue order |
+| **Meterless Nightshift** (primary AI provider) | Every model call goes to Nightshift on `127.0.0.1:8088` through the provider contract 0.90.0 (URL normalisation, `meterless-app` and `meterless-scope` headers, status by `/v1/models`, auto-detect on 8088/8090/8787/11434). Nightshift relays to a free cloud model from its Providers tab. Nirvana refuses routing modes and on-device model ids, so no model runs on this machine (`relayed_nemotron`). | the model has no route, and unexplained differences end in `keep` |
+| **NVIDIA Nemotron** | The model Nightshift relays to (a free `nvidia/nemotron-*:free` variant). It proposes rewrites for differences no rule explains; the judge decides on the rows. | unexplained differences end in `keep` with no second opinion |
 | **Databricks** (the subject, not a sponsor) | The source of truth: its answer is the one every rewrite must reproduce. Free Edition ships `samples.tpcds_sf1`. | |
+
+## Pre-existing work, declared
+
+Everything under `src/`, `tests/`, `bridges/`, `scripts/` and `web/` was written during the hackathon (22 to 27 Oct 2026); the commit history shows it. These parts were not:
+
+| Component | Where | Origin | Changed? |
+|---|---|---|---|
+| Meterless H-MEM reference engine | `vendor/meterless/hmem/` | github.com/Meterless/Meterless at `1742dec` (Apache-2.0) | no, copied unchanged (`vendor/meterless/UPSTREAM.md`) |
+| 103 TPC-DS query texts | `src/nirvana/workload/tpcds/` | Apache Spark at `3153f1e` (Apache-2.0) | no (`NOTICE.md`) |
+| TPC-DS data at scale 1 | not in the repo | DuckDB's `tpcds` extension (`dsdgen`), generated locally | no |
+| Zetaris platform | not in the repo | the hackathon's Zetaris docker images | no |
+| Inter and JetBrains Mono fonts | `web/dist/assets/fonts/` | Google Fonts (OFL) | no |
 
 ## The workload
 
