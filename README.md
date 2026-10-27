@@ -356,6 +356,30 @@ A common way data reaches a new engine is an export to CSV and a load with infer
 
 **Keeping it honest afterwards.** The Guard rules page measures every column of `customer_address` on Databricks (row count, NULLs, value ranges, text lengths), writes each measurement as a Zetaris data-quality rule on a Unified Semantic Layer table over the migrated copy (`COMPILE USL`, `ACTIVATE USL TABLE`, `REGISTER DQ`), and runs them with `RUN DQ`. 12 of 13 rules hold; `ca_zip_shape` (`length(cast(ca_zip AS string)) = 5`, because every ZIP on Databricks is 5 characters) breaks on **1,351 of 50,000 rows**, the same rows the federated diff found, and `SHOW DQ INVALID RECORD` lists them. The rules stay on Zetaris after Nirvana is gone (`src/nirvana/guard.py`).
 
+### The agent: what the checks could not settle
+
+The table check is deliberately strict, so it blocks more than it should: after a CSV load, `s_street_number` holds the same numbers as integers, yet its smallest value reads `27` instead of `175` because numbers and text sort differently. A rule cannot tell that apart from real damage. The investigating agent can (`src/nirvana/investigate.py`, the dashboard's **Agent** page):
+
+1. Nemotron, through Meterless Nightshift, is shown the facts (which measures differ, which types changed) and what H-MEM recalls from earlier cases, and picks one tool: profile a column on both engines, compare a column row by row in one federated Zetaris query, verify a repair expression, install a guard rule, or for a query apply a rule, read outputs at the source's declared types, or try its own SQL.
+2. Nirvana runs that tool on Databricks and Zetaris and returns the rows.
+3. Repeat, up to 8 steps. The model never decides what is true: a column is cleared only by a comparison with 0 differing rows, a repair only by a federated count of 0 mismatches over every row, a query only by rows equal to Databricks'.
+
+Live, on the CSV copy (`recordings/investigations.jsonl`):
+
+| Case | Steps | Time | What the agent proved |
+|---|---:|---:|---|
+| `customer_address` (memory empty) | 4 | 104 s | `ca_street_number` is unchanged (0 of 50,000 differ). `ca_zip` differs on 1,351 rows; Nemotron proposed `lpad(cast(x as string), 5, '0')`, and Zetaris confirmed it reproduces all 50,000 Databricks values |
+| `store` | 2 | 35 s | `s_street_number` is unchanged; H-MEM had recalled the `ca_street_number` finding |
+| `web_site` | 2 | 70 s | `web_street_number` is unchanged |
+
+**What it unlocked.** Re-judging the 55 queries the check had blocked, with those three findings (and the ZIP repair available as a rewrite), moved **53 of them** (`run-20261027-231701-b38713`): 15 identical, 33 within float noise, 5 after a proven type rewrite. Together with the first run that is **100 of 103 TPC-DS queries proven movable** to the CSV-loaded Zetaris copy, up from 47. q64 and q66 stay on Databricks with the rows that differ, and q30 cannot run on the source.
+
+**Nightshift keeps the record.** Every agent turn goes through Nightshift, which files the conversation as one of its own jobs (`[Nirvana]`, an `app_stream` job) and classifies each turn with its intent engine, so the whole investigation can be reread from Nightshift's job list.
+
+### The overnight audit
+
+The **Overnight audit** page chains everything into one job you start before leaving (`src/nirvana/audit.py`): run all 103 queries against the chosen Zetaris copy, investigate every blocked table and kept query, re-judge the blocked queries with what was proven, install a Zetaris guard rule for every repaired column, and write a morning report (movable before and after, every repair, every guard rule and how many rows break it today, what is still open).
+
 **H-MEM on the live pair.** The five order-tie queries were then run twice more with H-MEM on. In the first of those runs (`run-20261027-214018-c78072`), q6 and q75 proved order ties by running the explicit-NULL-order rewrite on Zetaris and stored that proof in H-MEM; q56, q64 and q77 recalled q6's proof and skipped the rewrite run. In the second run (`run-20261027-214316-14f1f0`) all five recalled it, and Zetaris time for the five queries fell from 32.2 s to 22.2 s with the same verdicts. Both runs are in `recordings/`.
 
 The first live attempt pointed Zetaris at its bundled `TPCDS_DB` sample instead. Alignment stopped it: 7 of 24 tables differ from Databricks' `samples.tpcds_sf1` in row count (`catalog_page` 11,718 vs 311,718; `catalog_sales` 1,439,935 vs 1,621,741; `store_sales` 2,879,789 vs 2,880,404), so every query over them would have compared two datasets rather than two engines.
@@ -386,6 +410,8 @@ The 103 TPC-DS query texts as Apache Spark renders them (99 templates; 14, 23, 2
 | Rewrites on the live pair | none were needed when both engines read the same parquet files (both are Spark-based). On the CSV-export path, **3 rewrites were proven live on Zetaris** (q7, q26, q28, type drift) |
 | Row diff against Databricks itself | real: Zetaris reads the Databricks warehouse through its bundled Databricks JDBC driver in the same query as its own tables |
 | Guard rules | real: 13 Zetaris DQ rules on `customer_address`, run live; 1 broken on 1,351 rows |
+| Investigating agent | real: 3 blocked tables cleared live with proof, 53 of 55 blocked queries moved on re-judge (47 → 100 of 103) |
+| Free model quota | OpenRouter's free tier allows 50 requests a day; the agent stops cleanly when the route answers 429 |
 | Nemotron through Nightshift | real: one live proposal recorded during setup; in the full run no difference needed the model |
 | Cost figures | none: Nirvana reports verdicts and timings only; it makes no dollar claim of its own |
 
