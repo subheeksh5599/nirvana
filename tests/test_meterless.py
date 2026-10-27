@@ -240,10 +240,11 @@ def test_model_provider_prefers_explicit_url():
 
     def handler(req):
         assert req.url.host == "box.local"
-        return httpx.Response(200, json={"data": [{"id": "meterless/auto"}]})
+        return httpx.Response(200, json={"data": [{"id": "meterless/auto"}, {"id": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free"}]})
 
     p, st = model_provider(_settings(METERLESS_URL="box.local:8088", NVIDIA_API_KEY="nv"), transport=httpx.MockTransport(handler))
     assert p is not None and p.url == "http://box.local:8088/v1" and st.state == "online"
+    assert p.model == "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free"
 
 
 def test_model_provider_uses_nvidia_key_and_picks_a_nemotron():
@@ -284,11 +285,46 @@ def test_model_provider_auto_detect_when_nothing_configured():
 
     def handler(req):
         if req.url.port == 11434:
-            return httpx.Response(200, json={"data": [{"id": "nemotron-3-nano:4b"}]})
+            return httpx.Response(200, json={"data": [{"id": "nemotron-3-nano:4b"}, {"id": "nvidia/nemotron-3.5-lightning:free"}]})
         raise httpx.ConnectError("closed")
 
     p, st = model_provider(_settings(), transport=httpx.MockTransport(handler))
-    assert p is not None and p.url.endswith(":11434/v1") and p.model == "nemotron-3-nano:4b"
+    assert p is not None and p.url.endswith(":11434/v1") and p.model == "nvidia/nemotron-3.5-lightning:free"
+
+
+def _runtime(models):
+    return httpx.MockTransport(lambda req: httpx.Response(200, json={"data": [{"id": m} for m in models]}))
+
+
+@pytest.mark.parametrize("models", [
+    ("meterless/auto", "meterless/local", "meterless/deep"),
+    ("nemotron-3-nano:4b",),
+    ("llama-3.2-3b", "qwen2.5-coder-3b"),
+    ("nvidia/nemotron-3-super-120b-a12b",),
+    ("nvidia/nemotron-3.5-content-safety:free",),
+    (),
+])
+def test_runtime_without_a_relayed_free_nemotron_is_refused(models):
+    from nirvana.meterless import model_provider
+
+    p, st = model_provider(_settings(METERLESS_URL="127.0.0.1:8088"), transport=_runtime(models))
+    assert p is None and st.state == "offline" and "Providers" in st.detail
+
+
+@pytest.mark.parametrize("preferred", ["meterless/auto", "meterless/local", "nemotron-3-nano:4b"])
+def test_a_local_model_named_in_settings_is_never_used(preferred):
+    from nirvana.meterless import model_provider
+
+    p, _ = model_provider(_settings(METERLESS_URL="127.0.0.1:8088", METERLESS_MODEL=preferred), transport=_runtime((preferred, "nvidia/nemotron-3-ultra-550b-a55b:free")))
+    assert p.model == "nvidia/nemotron-3-ultra-550b-a55b:free"
+
+
+def test_the_configured_relayed_nemotron_is_kept():
+    from nirvana.meterless import model_provider
+
+    want = "openrouter/nvidia/nemotron-3.5-lightning:free"
+    p, _ = model_provider(_settings(METERLESS_URL="127.0.0.1:8088", METERLESS_MODEL=want), transport=_runtime(("nvidia/nemotron-3-ultra-550b-a55b:free", want)))
+    assert p.model == want
 
 
 def test_openrouter_only_routes_to_free_nemotron():

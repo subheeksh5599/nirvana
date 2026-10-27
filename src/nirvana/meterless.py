@@ -205,6 +205,28 @@ def free_nemotron(models: tuple[str, ...], preferred: str) -> str | None:
     return None
 
 
+# Model ids a Meterless runtime may serve on this machine's own GPU. Nirvana never asks
+# for them: on a runtime it only uses a free Nemotron that the runtime relays to the cloud.
+ON_DEVICE = ("meterless/", "local", "llama", "qwen", "gemma", "phi", "smollm", "mlx", "gguf", "webgpu")
+
+
+def relayed_nemotron(models: tuple[str, ...], preferred: str) -> str | None:
+    """The Nemotron a runtime relays to a free cloud provider: the configured id when it is
+    one, else the first listed. Routing modes (meterless/auto, meterless/local) are refused,
+    because the runtime may answer them with a model on this machine."""
+
+    def ok(m: str) -> bool:
+        low = m.lower()
+        return "nemotron" in low and low.endswith(":free") and not low.startswith(ON_DEVICE[0]) and "safety" not in low and "embed" not in low
+
+    if ok(preferred) and (not models or preferred in models):
+        return preferred
+    for m in models:
+        if ok(m):
+            return m
+    return None
+
+
 def model_provider(s, *, transport: httpx.BaseTransport | None = None) -> tuple[MeterlessProvider | None, ProviderStatus | None]:
     """The model route, in this order: an explicit METERLESS_URL; NVIDIA's hosted
     OpenAI-compatible endpoint when NVIDIA_API_KEY is set; otherwise a Meterless runtime
@@ -233,7 +255,13 @@ def model_provider(s, *, transport: httpx.BaseTransport | None = None) -> tuple[
     st = p.status()
     if st.state != "online":
         return None, st
-    if st.models and p.model not in st.models:
-        nemotron = [m for m in st.models if "nemotron" in m.lower()]
-        p.model = nemotron[0] if nemotron and not p.model.startswith("meterless/") else pick_model(st.models, p.model)
+    if p.url == NVIDIA_URL:
+        if st.models and p.model not in st.models:
+            nemotron = [m for m in st.models if "nemotron" in m.lower()]
+            p.model = nemotron[0] if nemotron else pick_model(st.models, p.model)
+        return p, st
+    chosen = relayed_nemotron(st.models, s.meterless_model)
+    if chosen is None:
+        return None, ProviderStatus("offline", p.url, st.models, "the runtime lists no cloud-relayed free Nemotron; add OpenRouter in Nightshift's Providers tab")
+    p.model = chosen
     return p, st
