@@ -374,7 +374,9 @@ Live, on the CSV copy (`recordings/investigations.jsonl`):
 
 **What it unlocked.** Re-judging the 55 queries the check had blocked, with those three findings (and the ZIP repair available as a rewrite), moved **53 of them** (`run-20261027-231701-b38713`): 15 identical, 33 within float noise, 5 after a proven type rewrite. Together with the first run that is **100 of 103 TPC-DS queries proven movable** to the CSV-loaded Zetaris copy, up from 47. q64 and q66 stay on Databricks with the rows that differ, and q30 cannot run on the source.
 
-**Nightshift keeps the record.** Every agent turn goes through Nightshift, which files the conversation as one of its own jobs (`[Nirvana]`, an `app_stream` job) and classifies each turn with its intent engine, so the whole investigation can be reread from Nightshift's job list.
+**Nightshift keeps the record.** Every agent turn goes through Nightshift, which files the calls as one of its own jobs (`[Nirvana] - job_mvr0hm4a01`, kind `app_stream`, 48 turns so far), so the investigations can be reread from Nightshift's job list (`ns job list`).
+
+**q66 is still open.** The agent spent 8 steps on it (313 s): rounding to the source precision, casting the outputs to their declared types, and its own rewrites. Every attempt left the `*_per_sq_foot` columns different, so Zetaris refused all of them and q66 stays on Databricks. That is the system working as designed, not a fix.
 
 ### The overnight audit
 
