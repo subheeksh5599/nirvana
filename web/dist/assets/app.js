@@ -280,6 +280,7 @@ async function paneOverview() {
       <div class="panel-body">
         <div class="form-row">
           <div class="seg" id="engines-seg"><button data-v="live" class="on">Databricks to Zetaris</button><button data-v="rehearsal">Local rehearsal</button></div>
+          <select id="target-loc" class="btn" title="Which copy on Zetaris to judge against"><option value="">Zetaris: same parquet files</option><option value="NIRVANA_CSV">Zetaris: loaded from CSV exports</option></select>
           <label class="check"><input type="checkbox" id="use-model" checked> Ask Nemotron when rules fail</label>
           <label class="check"><input type="checkbox" id="use-memory" checked> Use H-MEM memory</label>
         </div>
@@ -306,7 +307,7 @@ async function paneOverview() {
     msg.textContent = "Starting";
     msg.className = "note";
     try {
-      const r = await api("/runs", { method: "POST", body: JSON.stringify({ engines, queries: ids.length ? ids : null, use_model: document.getElementById("use-model").checked, use_memory: document.getElementById("use-memory").checked }) });
+      const r = await api("/runs", { method: "POST", body: JSON.stringify({ engines, queries: ids.length ? ids : null, use_model: document.getElementById("use-model").checked, use_memory: document.getElementById("use-memory").checked, target_location: engines === "live" ? (document.getElementById("target-loc").value || null) : null }) });
       setRun(r.id);
       state.runs = null;
       navigate(`/app/run?run=${encodeURIComponent(r.id)}`);
