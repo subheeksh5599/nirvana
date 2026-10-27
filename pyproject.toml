@@ -1,0 +1,27 @@
+[project]
+name = "nirvana"
+version = "0.1.0"
+description = "Proves which data jobs can leave Databricks: every query runs on both engines, answers are compared row by row, and only proven rewrites are kept."
+readme = "README.md"
+authors = [
+    { name = "subheeksh5599", email = "komasubheeksh@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "duckdb>=2.0.0",
+    "fastapi>=0.162.0",
+    "httpx>=0.28.1",
+    "pydantic>=2.14.1",
+    "sqlglot>=30.25.0",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.6,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.170.12",
+    "pytest>=9.1.1",
+]
