@@ -29,6 +29,7 @@ from . import workload as wl
 from .config import Settings, load_env_file, settings as read_settings
 from .engines import Engine, build
 from .federate import DiffStore, row_diff
+from .guard import GuardStore, build_guard
 from .ledger import Ledger
 from .runner import Run, load_recordings
 
@@ -46,6 +47,12 @@ class DiffRequest(BaseModel):
     table: str = Field(..., description="a TPC-DS table name")
     reference: str = Field(..., description="the Zetaris database holding the copy the source was loaded from")
     candidate: str = Field(..., description="the Zetaris database holding the copy to check")
+    sample: int = Field(5, ge=0, le=50)
+
+
+class GuardRequest(BaseModel):
+    table: str = Field(..., description="a TPC-DS table name")
+    candidate: str = Field(..., description="the Zetaris database holding the migrated copy")
     sample: int = Field(5, ge=0, le=50)
 
 
@@ -283,6 +290,28 @@ def create_app(s: Settings | None = None, mode: str | None = None) -> FastAPI:
             raise HTTPException(400, d.error)
         diffs.save(d)
         return d.as_dict()
+
+    guards = GuardStore(s.recordings_dir / "guards.jsonl")
+
+    @app.get("/api/guards")
+    def list_guards():
+        return guards.latest()
+
+    @app.post("/api/guards")
+    def run_guard(req: GuardRequest):
+        if state.mode != "live":
+            raise HTTPException(409, "this server only serves recorded results; start it in live mode with both engines running")
+        if req.table not in wl.TPCDS_TABLES:
+            raise HTTPException(400, f"unknown table {req.table}")
+        try:
+            src, z = build(s.source, s, role="source"), build("zetaris", s, role="target")
+        except ValueError as e:
+            raise HTTPException(400, f"engines not configured: {e}")
+        g = build_guard(src, f"{s.source_location}.{req.table}", z, req.table, req.candidate, sample=req.sample)
+        if g.error and g.error.startswith("not a plain identifier"):
+            raise HTTPException(400, g.error)
+        guards.save(g)
+        return g.as_dict()
 
     @app.get("/api/memory")
     def memory(q: str = "status:different", top: int = 10):
