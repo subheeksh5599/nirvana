@@ -107,6 +107,7 @@ class MeterlessProvider:
             "model": self.model,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
             "temperature": temperature,
+            "max_tokens": 4096,
             "stream": False,
         }
         with self._client() as c:

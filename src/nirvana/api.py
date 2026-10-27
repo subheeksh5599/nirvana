@@ -32,6 +32,7 @@ from .config import Settings, load_env_file, settings as read_settings
 from .engines import Engine, build
 from .federate import DiffStore, row_diff
 from .guard import GuardStore, build_guard
+from .investigate import Agent, InvestigationStore
 from .ledger import Ledger
 from .runner import Run, load_recordings
 
@@ -44,6 +45,7 @@ class RunRequest(BaseModel):
     use_model: bool = Field(True, description="ask the Meterless runtime for a rewrite when the rules find none")
     use_memory: bool = Field(True, description="recall and store proven fixes in H-MEM")
     target_location: str | None = Field(None, description="the Zetaris database to judge against; the configured one when omitted")
+    explained_by: list[str] | None = Field(None, description="ids of finished agent investigations whose proven findings may clear blocked tables")
 
 
 class DiffRequest(BaseModel):
@@ -57,6 +59,12 @@ class GuardRequest(BaseModel):
     table: str = Field(..., description="a TPC-DS table name")
     candidate: str = Field(..., description="the Zetaris database holding the migrated copy")
     sample: int = Field(5, ge=0, le=50)
+
+
+class InvestigateRequest(BaseModel):
+    run_id: str = Field(..., description="the run whose blocked table or kept query to investigate")
+    table: str | None = Field(None, description="a table the run's alignment blocked")
+    query_id: str | None = Field(None, description="a query the run kept on the source")
 
 
 class State:
@@ -191,8 +199,16 @@ def create_app(s: Settings | None = None, mode: str | None = None) -> FastAPI:
 
                     advisor = ModelAdvisor(p)
             memory = state.memory() if req.use_memory else None
+            explained = {}
+            for inv_id in req.explained_by or []:
+                inv = investigations.get(inv_id)
+                if inv is None or inv.get("status") != "done" or inv.get("kind") != "table" or not inv.get("cleared"):
+                    raise HTTPException(400, f"investigation {inv_id} did not clear its table")
+                fs = [f for f in inv["findings"] if f["kind"] in ("same_values", "repair")]
+                explained[inv["subject"]] = {"investigation": inv_id, "columns": [f["column"] for f in fs],
+                                             "repairs": {f["column"]: f["expression"] for f in fs if f["kind"] == "repair" and f.get("expression")}}
             run = Run(state.ledger, src, tgt, queries, mode=mode, advisor=advisor, memory=memory, max_rows=s.max_rows,
-                      recordings_dir=s.recordings_dir if mode == "live" else None)
+                      recordings_dir=s.recordings_dir if mode == "live" else None, explained=explained)
             state.runs[run.id] = run
             run.start()
         return {"id": run.id, "mode": mode, "queries": len(queries), "model": advisor is not None, "memory": memory is not None}
@@ -276,6 +292,71 @@ def create_app(s: Settings | None = None, mode: str | None = None) -> FastAPI:
     def recording(run_id: str):
         get_run(run_id)
         return JSONResponse(state.ledger.export(run_id), headers={"Content-Disposition": f'attachment; filename="{run_id}.json"'})
+
+    investigations = InvestigationStore(s.recordings_dir / "investigations.jsonl")
+
+    @app.get("/api/investigations")
+    def list_investigations():
+        return investigations.all()
+
+    @app.get("/api/investigations/{inv_id}")
+    def get_investigation(inv_id: str):
+        inv = investigations.get(inv_id)
+        if inv is None:
+            raise HTTPException(404, f"no investigation {inv_id}")
+        return inv
+
+    @app.post("/api/investigations", status_code=202)
+    def start_investigation(req: InvestigateRequest):
+        if state.mode != "live":
+            raise HTTPException(409, "this server only serves recorded results; start it in live mode with both engines running")
+        run = state.ledger.run(req.run_id)
+        if run is None:
+            raise HTTPException(404, f"no run {req.run_id}")
+        if bool(req.table) == bool(req.query_id):
+            raise HTTPException(400, "name exactly one of table or query_id")
+        if any(i.get("status") == "running" for i in investigations.all()):
+            raise HTTPException(409, "an investigation is still running")
+        al: dict[str, Any] | None = None
+        j: dict[str, Any] | None = None
+        if req.table:
+            al = next((a for a in state.ledger.alignment(req.run_id) if a["table"] == req.table), None)
+            if al is None or al["status"] != "not_aligned":
+                raise HTTPException(400, f"{req.table} was not blocked in {req.run_id}")
+        else:
+            j = state.ledger.judgement(req.run_id, req.query_id)
+            if j is None:
+                raise HTTPException(404, f"no judgement {req.query_id} in {req.run_id}")
+            drift = {c["column"].lower(): c["source"] for a in state.ledger.alignment(req.run_id) if a["table"] in (j.get("tables") or []) for c in a["type_changes"]}
+            j = {**j, "drift": drift}
+        provider, _ = state.provider()
+        if provider is None:
+            raise HTTPException(400, "no model route: start Meterless Nightshift with a cloud provider")
+        candidate = (run.get("target") or {}).get("location") or s.target_location
+        try:
+            src, z = build(s.source, s, role="source"), build("zetaris", s, role="target")
+        except ValueError as e:
+            raise HTTPException(400, f"engines not configured: {e}")
+        first: dict[str, Any] = {}
+
+        def emit(inv):
+            first.setdefault("id", inv.id)
+            investigations.put(inv)
+
+        agent = Agent(provider, src, z, source_location=s.source_location, memory=state.memory(), on_step=emit)
+
+        def work():
+            if req.table:
+                agent.investigate_table(req.table, candidate, al or {})
+            else:
+                agent.investigate_query(req.query_id, candidate, j or {})
+
+        threading.Thread(target=work, daemon=True).start()
+        for _ in range(600):
+            if "id" in first:
+                break
+            time.sleep(0.05)
+        return {"id": first.get("id"), "run_id": req.run_id, "table": req.table, "query_id": req.query_id, "candidate": candidate}
 
     diffs = DiffStore(s.recordings_dir / "row-diffs.jsonl")
 
