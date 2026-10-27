@@ -4,7 +4,7 @@
 
 ### Before a query leaves Databricks, it runs on both engines, and only a rewrite proven on the rows is kept.
 
-[![tests](https://img.shields.io/badge/tests-1207%20passing-2ea44f)](#tests)
+[![tests](https://img.shields.io/badge/tests-1230%20passing-2ea44f)](#tests)
 [![workload](https://img.shields.io/badge/workload-103%20TPC--DS%20queries-1f6feb)](#the-workload)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![stack](https://img.shields.io/badge/Zetaris%20%C2%B7%20Meterless%20%C2%B7%20Nemotron-engines-6f42c1)](#where-each-sponsor-technology-is-load-bearing)
@@ -36,7 +36,8 @@ different input tables                                                          
 | Web app: landing page and dashboard (overview, live run, queries, tables, receipt, workload, memory, history) | built, served by the API, tested | `web/dist/`, `tests/test_web.py` |
 | Model route: Meterless runtime, free Nemotron on OpenRouter, or NVIDIA's hosted Nemotron | built, tested; OpenRouter route answered live on 27 Oct 2026 | `tests/test_meterless.py` |
 | Full rehearsal run, 103 queries on two local engines | run on 27 Oct 2026 | [See it in one command](#-see-it-in-one-command) |
-| Full live run, Databricks Free Edition against Zetaris Lightning | **pending**: needs the two engines running | [honesty table](#whats-real-vs-pending--the-honesty-table) |
+| Full live run, Databricks Free Edition against Zetaris Lightning, 103 queries | **run on 27 Oct 2026: 102 of 103 can move** (96 identical, 6 identical up to tied-row order or float noise, 1 blocked) | [The live run](#the-live-run-databricks-against-zetaris), `recordings/run-20261027-181712-e4eb1f.json` |
+| Nightshift as the AI provider, relaying a free NVIDIA Nemotron | answered live on 27 Oct 2026 (a correct integer-division rewrite, 61 s) | [How we used every sponsor](#how-we-used-every-sponsor-in-plain-words) |
 
 ## The 20-second pitch
 
@@ -99,6 +100,7 @@ SpaceXAI's coding agents were withdrawn from the event by the organisers, so the
 - [What source alignment measures](#what-source-alignment-measures)
 - [Where the model sits](#where-the-model-sits)
 - [Where each sponsor technology is load-bearing](#where-each-sponsor-technology-is-load-bearing)
+- [The live run: Databricks against Zetaris](#the-live-run-databricks-against-zetaris)
 - [The workload](#the-workload)
 - [Engineering decisions & the traps that taught me something](#engineering-decisions--the-traps-that-taught-me-something)
 - [What's real vs pending — the honesty table](#whats-real-vs-pending--the-honesty-table)
@@ -167,7 +169,7 @@ uv run pytest -q
 ```
 
 ```
-1207 passed in 9.38s
+1230 passed in 11.04s
 ```
 
 The suite runs real SQL. Each test of the judge sets up DuckDB connections over the same generated TPC-DS rows and changes one documented thing on the target: `SET SESSION integer_division = true`, `SET SESSION default_null_order = 'nulls_last'`, the DECIMAL columns stored as REAL, or the rows of `item` stored in shuffled order. Then it asserts the cause the judge proves. None of these tests imitates an engine. HTTP doubles stand in only where a vendor's wire format is under test (Databricks statements API, Zetaris REST, Meterless provider), and they speak the shapes those vendors document.
@@ -316,6 +318,22 @@ At the very end, and only as a proposer. When every rule has failed, `ModelAdvis
 | Zetaris platform | not in the repo | the hackathon's Zetaris docker images | no |
 | Inter and JetBrains Mono fonts | `web/dist/assets/fonts/` | Google Fonts (OFL) | no |
 
+## The live run: Databricks against Zetaris
+
+27 Oct 2026, 18:17 to 18:29 UTC. Source: Databricks Free Edition (serverless SQL warehouse), schema `workspace.nirvana_tpcds`. Target: Zetaris Lightning (the hackathon docker build on a MacBook), database `NIRVANA_TPCDS`. Both read the same 24 TPC-DS scale-1 parquet files (`scripts/load_databricks.py`, `scripts/load_zetaris.py`); all 24 tables aligned on every profile measure.
+
+| Verdict | Queries | Which |
+|---|---:|---|
+| move | 96 | same rows, same order |
+| move_note, `order_ties` | 5 | q6, q56, q64, q75, q77: same rows; the order differs only among rows the ORDER BY does not separate |
+| move_note, `float_noise` | 1 | q58: largest relative gap 9.52e-11 |
+| blocked, `source_error` | 1 | q30 reads `c_last_review_date`; the generated `customer` table names it `c_last_review_date_sk`, so Databricks refuses the query |
+| rewrite / keep | 0 | |
+
+Total execution time: 247 s on Databricks and 272 s on Zetaris for the 103 queries. The run's receipt and every row fingerprint are in `recordings/run-20261027-181712-e4eb1f.json`; `NIRVANA_MODE=recorded uv run nirvana serve` serves it without either engine.
+
+The first live attempt pointed Zetaris at its bundled `TPCDS_DB` sample instead. Alignment stopped it: 7 of 24 tables differ from Databricks' `samples.tpcds_sf1` in row count (`catalog_page` 11,718 vs 311,718; `catalog_sales` 1,439,935 vs 1,621,741; `store_sales` 2,879,789 vs 2,880,404), so every query over them would have compared two datasets rather than two engines.
+
 ## The workload
 
 The 103 TPC-DS query texts as Apache Spark renders them (99 templates; 14, 23, 24 and 39 have two parts), copied unchanged from the Apache Spark repository at a pinned commit (`src/nirvana/workload/tpcds/NOTICE.md`). 91 of them sort their output. Databricks Free Edition provides the data as `samples.tpcds_sf1`, and the Zetaris getting-started material supplies a `TPCDS_DB` sample. Nirvana qualifies table names per engine with sqlglot and leaves CTE names and already-qualified names alone. A test runs 101 of the queries before and after qualification on generated data and requires identical rows.
@@ -334,12 +352,13 @@ The 103 TPC-DS query texts as Apache Spark renders them (99 templates; 14, 23, 2
 
 | Claim | State |
 |---|---|
-| 1,207 tests pass, executing real SQL on DuckDB and the real H-MEM engine | real (`uv run pytest -q`) |
+| 1,230 tests pass, executing real SQL on DuckDB and the real H-MEM engine | real (`uv run pytest -q`) |
 | Full 103-query rehearsal run | real, two local DuckDB engines, labelled rehearsal |
-| Databricks client | built and tested against the documented statements API; **not yet run against a live warehouse** |
-| Zetaris client | built against the request shape in Zetaris' getting-started repo; the response parser accepts several column-metadata shapes because the exact one is **not yet confirmed on a live instance** |
-| Full live run (Databricks Free Edition → Zetaris Lightning) | **pending**: needs both engines running |
-| Nemotron through the Meterless contract | contract tested; **no live model call recorded yet** |
+| Databricks client | real: ran all 103 queries and 24 table profiles on a Databricks Free Edition serverless warehouse |
+| Zetaris client | real: ran all 103 queries, 24 table profiles and the filestore registrations on Zetaris Lightning (local docker, hackathon build); the live response shape (`headers` + `data`) is pinned in tests |
+| Full live run (Databricks Free Edition → Zetaris Lightning) | real, 27 Oct 2026, recorded in `recordings/` |
+| Rewrites on the live pair | **none were needed**: both engines are Spark-based and returned the same answers. The rewrite path is proven on real engines changed in one documented way each (`tests/test_judge.py`) and in the local rehearsal, not on this pair |
+| Nemotron through Nightshift | real: one live proposal recorded during setup; in the full run no difference needed the model |
 | Cost figures | none: Nirvana reports verdicts and timings only; it makes no dollar claim of its own |
 
 ## Attack → test
@@ -371,7 +390,7 @@ The 103 TPC-DS query texts as Apache Spark renders them (99 templates; 14, 23, 2
 
 ## Tech stack
 
-Python 3.12, FastAPI, httpx, sqlglot 30, DuckDB 2.0, SQLite, pytest and Hypothesis (1,207 tests). Node with tsx runs the vendored Meterless H-MEM reference engine. Zetaris Lightning (REST), the Databricks SQL Statement Execution API, and the Meterless provider contract 0.90.0 with NVIDIA Nemotron.
+Python 3.12, FastAPI, httpx, sqlglot 30, DuckDB 2.0, SQLite, pytest and Hypothesis (1,230 tests). Node with tsx runs the vendored Meterless H-MEM reference engine. Zetaris Lightning (REST), the Databricks SQL Statement Execution API, and the Meterless provider contract 0.90.0 with NVIDIA Nemotron.
 
 ## Project layout
 
@@ -386,7 +405,7 @@ src/nirvana/
 web/dist/                           the web app (plain HTML, CSS and JS, fonts served locally)
 bridges/hmem.ts                     JSON-lines bridge to H-MEM
 vendor/meterless/hmem/              H-MEM reference engine, unchanged (UPSTREAM.md)
-tests/                              1,207 tests
+tests/                              1,230 tests
 recordings/                         finished live runs served in recorded mode
 ```
 
@@ -412,7 +431,7 @@ The live mode needs both engines reachable, so it runs where Zetaris runs. Recor
 
 ```
 uv run pytest -q
-1207 passed in 9.38s
+1230 passed in 11.04s
 ```
 
 | File | What it covers |
