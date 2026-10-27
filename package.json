@@ -1,0 +1,13 @@
+{
+  "name": "nirvana-memory-bridge",
+  "private": true,
+  "description": "Runs the vendored Meterless H-MEM reference engine for the Python service.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "hmem:test": "cd vendor/meterless/hmem && npx vitest run"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0"
+  }
+}
