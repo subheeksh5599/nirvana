@@ -214,6 +214,8 @@ class Judge:
             j.comparison = cmp.summary()
             if cmp.status != "identical":
                 j.sample = _sample(cmp)
+            if cmp.status == "identical" and (src.truncated or tgt.truncated):
+                return self._done(j, "move_note", "truncated", f"the first {self.max_rows} rows are identical; the rest were not fetched")
             if cmp.status == "identical":
                 return self._done(j, "move", None, "same answer on both engines")
             if cmp.status == "float_noise":
@@ -259,7 +261,7 @@ class Judge:
             return False
         a = self._run(self.source, s_nolimit, "probe: source without LIMIT", steps)
         b = self._run(self.target, t_nolimit, "probe: target without LIMIT", steps)
-        if isinstance(a, EngineError) or isinstance(b, EngineError):
+        if isinstance(a, EngineError) or isinstance(b, EngineError) or a.truncated or b.truncated:
             return False
         if compare(a, b, ordered=False, rel_tol=self.rel_tol).status not in ("identical", "float_noise"):
             return False

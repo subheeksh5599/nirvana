@@ -328,3 +328,9 @@ def test_q41_is_not_flagged_as_dividing():
 
     assert has_division(get("q41").sql) is False
     assert has_division(get("q90").sql) is True
+
+
+def test_truncated_identical_answer_is_not_a_plain_move(source, same):
+    j = Judge(source, same, max_rows=5).judge(q("SELECT i_item_sk FROM item ORDER BY i_item_sk"))
+    assert j.verdict == "move_note" and j.cause == "truncated"
+    assert "first 5 rows" in j.note
