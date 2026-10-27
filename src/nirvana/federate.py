@@ -52,9 +52,28 @@ def except_all(left: str, right: str) -> str:
     return f"SELECT * FROM {left} EXCEPT ALL SELECT * FROM {right}"
 
 
+# The Zetaris datasource that reaches the Databricks SQL warehouse over JDBC
+# (scripts/link_databricks.py). Its tables are exposed as datasource views named <table>_v.
+DATABRICKS = "DATABRICKS"
+
+
+def relation(source: str, table: str) -> str:
+    """The Zetaris name of ``table`` in ``source``: a Lightning database, or the Databricks
+    datasource, whose per-table views are named ``<table>_v``."""
+    s, t = _ident(source), _ident(table)
+    return f"{s}.{t}_v" if s.upper() == DATABRICKS else f"{s}.{t}"
+
+
+def view_sql(table: str, location: str) -> str:
+    """Native SQL Zetaris sends to Databricks for one table, through the datasource."""
+    parts = location.split(".")
+    if not parts or not all(p and p.replace("_", "").isalnum() for p in parts):
+        raise ValueError(f"not a plain location: {location!r}")
+    return f"CREATE DATASOURCE VIEW {_ident(table)}_v FROM {DATABRICKS} AS SELECT * FROM {location}.{_ident(table)}"
+
+
 def diff_sql(table: str, reference: str, candidate: str, sample: int) -> dict[str, str]:
-    t, r, c = _ident(table), _ident(reference), _ident(candidate)
-    ref, cand = f"{r}.{t}", f"{c}.{t}"
+    ref, cand = relation(reference, table), relation(candidate, table)
     return {
         "count_reference": f"SELECT COUNT(*) AS n FROM ({except_all(ref, cand)}) d",
         "count_candidate": f"SELECT COUNT(*) AS n FROM ({except_all(cand, ref)}) d",
@@ -63,17 +82,21 @@ def diff_sql(table: str, reference: str, candidate: str, sample: int) -> dict[st
     }
 
 
-def row_diff(engine: Engine, table: str, reference: str, candidate: str, *, sample: int = 5, clock=time.time) -> RowDiff:
-    """Count and sample the rows only in each copy. Four statements, all run on ``engine``."""
+def row_diff(engine: Engine, table: str, reference: str, candidate: str, *, sample: int = 5, databricks_location: str | None = None, clock=time.time) -> RowDiff:
+    """Count and sample the rows only in each copy. Four statements, all run on ``engine``;
+    when either side is the Databricks datasource its view is (re)created first."""
     d = RowDiff(table, reference, candidate, at=clock())
     try:
         qs = diff_sql(table, reference, candidate, sample)
+        views = [view_sql(table, databricks_location or "") for side in (reference, candidate) if side.upper() == DATABRICKS][:1]
     except ValueError as e:
         d.error = str(e)
         return d
-    d.sql = list(qs.values())
+    d.sql = views + list(qs.values())
     started = time.perf_counter()
     try:
+        for v in views:
+            engine.run(v, max_rows=0)
         d.only_in_reference = int(engine.run(qs["count_reference"], max_rows=1).rows[0][0])
         d.only_in_candidate = int(engine.run(qs["count_candidate"], max_rows=1).rows[0][0])
         if d.only_in_reference:

@@ -278,8 +278,8 @@ def create_app(s: Settings | None = None, mode: str | None = None) -> FastAPI:
             z = build("zetaris", s, role="target")
         except ValueError as e:
             raise HTTPException(400, f"Zetaris not configured: {e}")
-        d = row_diff(z, req.table, req.reference, req.candidate, sample=req.sample)
-        if d.error and d.error.startswith("not a plain identifier"):
+        d = row_diff(z, req.table, req.reference, req.candidate, sample=req.sample, databricks_location=s.source_location)
+        if d.error and d.error.startswith(("not a plain identifier", "not a plain location")):
             raise HTTPException(400, d.error)
         diffs.save(d)
         return d.as_dict()

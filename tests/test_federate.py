@@ -149,3 +149,53 @@ def test_api_recorded_mode_refuses_to_run(tmp_path, monkeypatch):
     monkeypatch.setenv("NIRVANA_HOME", str(tmp_path))
     with TestClient(create_app(settings({"NIRVANA_HOME": str(tmp_path)}), mode="recorded")) as c:
         assert c.post("/api/diffs", json={"table": "store", "reference": "A", "candidate": "B"}).status_code == 409
+
+
+def test_relation_names():
+    from nirvana.federate import relation
+
+    assert relation("TPCDS_DB", "store") == "TPCDS_DB.store"
+    assert relation("DATABRICKS", "store") == "DATABRICKS.store_v"
+    assert relation("databricks", "store") == "databricks.store_v"
+
+
+def test_view_sql_reaches_databricks_through_the_datasource():
+    from nirvana.federate import view_sql
+
+    assert view_sql("store", "workspace.nirvana_tpcds") == "CREATE DATASOURCE VIEW store_v FROM DATABRICKS AS SELECT * FROM workspace.nirvana_tpcds.store"
+
+
+@pytest.mark.parametrize("loc", ["", "a;b", "a..b", "a b", "x.y; drop"])
+def test_view_sql_refuses_odd_locations(loc):
+    from nirvana.federate import view_sql
+
+    with pytest.raises(ValueError):
+        view_sql("store", loc)
+
+
+def test_databricks_side_creates_its_view_first():
+    seen = []
+
+    def handler(req):
+        sql = req.read().decode()
+        seen.append(sql)
+        return httpx.Response(200, json={"headers": ["n"], "data": [["0"]]})
+
+    z = ZetarisEngine("k", transport=httpx.MockTransport(handler))
+    d = row_diff(z, "store", "DATABRICKS", "NIRVANA_TPCDS", databricks_location="workspace.nirvana_tpcds")
+    assert d.identical, d.error
+    plain = [x for x in seen if "INFER SQLTABLE" not in x]
+    assert "CREATE DATASOURCE VIEW store_v FROM DATABRICKS" in plain[0]
+    assert "DATABRICKS.store_v EXCEPT ALL SELECT * FROM NIRVANA_TPCDS.store" in plain[1]
+    assert d.sql[0].startswith("CREATE DATASOURCE VIEW") and len(d.sql) == 5
+
+
+def test_databricks_side_without_a_location_is_an_error():
+    z = ZetarisEngine("k", transport=httpx.MockTransport(lambda r: httpx.Response(500)))
+    d = row_diff(z, "store", "DATABRICKS", "X")
+    assert d.error and "location" in d.error
+
+
+def test_view_failure_is_reported(duck):
+    d = row_diff(duck, "t", "DATABRICKS", "cand", databricks_location="main")
+    assert d.error is not None
