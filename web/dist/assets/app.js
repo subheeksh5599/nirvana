@@ -138,7 +138,7 @@ async function landing() {
     <section class="block" id="causes"><div class="wrap">
       <div class="eyebrow">What it catches</div>
       <h2>Answers that look right and are not.</h2>
-      <p class="one">Counts come from the latest run on this server.</p>
+      <p class="one">Counts come from the live runs above.</p>
       <div class="causes" id="causes-grid"></div>
     </div></section>
     <section class="block"><div class="wrap">
@@ -165,34 +165,40 @@ async function landing() {
   ];
   const board = document.getElementById("board");
   const grid = document.getElementById("causes-grid");
-  let summary = null, run = null;
+  const SCENARIO = { NIRVANA_TPCDS: "The same parquet files on both engines", NIRVANA_CSV: "Zetaris loaded from CSV exports with inferred types", TPCDS_DB: "Zetaris' bundled sample" };
+  let shown = [];
   try {
-    const { done } = await latestRun();
-    run = done;
-    summary = done && done.summary;
+    const runs = await api("/runs");
+    state.runs = runs;
+    const full = runs.filter((r) => r.status === "done" && r.summary && r.mode !== "rehearsal" && r.summary.queries === 103);
+    const seen = new Set();
+    for (const r of full) { const k = r.target.location; if (!seen.has(k)) { seen.add(k); shown.push(r); } }
+    shown = shown.slice(0, 2);
+    if (!shown.length) { const { done } = await latestRun(); if (done) shown = [done]; }
   } catch (e) {
     board.innerHTML = `<div class="empty">The API did not answer: ${esc(e.message)}</div>`;
-  }
-  const causes = (summary && summary.causes) || {};
-  grid.innerHTML = causeCards.map(([k, t, d]) => `<div class="cause"><div><h4>${esc(t)}</h4><p>${esc(d)}</p></div><div class="count">${summary ? (Object.entries(causes).filter(([c]) => c.split("+").includes(k)).reduce((s, [, n]) => s + n, 0)) : ""}</div></div>`).join("");
-  if (!summary) {
-    if (!board.innerHTML.includes("did not answer")) board.innerHTML = `<div class="empty">No finished run yet. <a href="/app" data-nav>Start one from the dashboard.</a></div>`;
     return;
   }
-  const v = summary.verdicts || {};
-  board.innerHTML = `
+  const causes = {};
+  shown.forEach((r) => Object.entries(r.summary.causes || {}).forEach(([c, n]) => { causes[c] = (causes[c] || 0) + n; }));
+  grid.innerHTML = causeCards.map(([k, t, d]) => `<div class="cause"><div><h4>${esc(t)}</h4><p>${esc(d)}</p></div><div class="count">${shown.length ? (Object.entries(causes).filter(([c]) => c.split("+").includes(k)).reduce((x, [, n]) => x + n, 0)) : ""}</div></div>`).join("");
+  if (!shown.length) { board.innerHTML = `<div class="empty">No finished run yet. <a href="/app" data-nav>Start one from the dashboard.</a></div>`; return; }
+  board.innerHTML = shown.map((run, idx) => {
+    const sm = run.summary, v = sm.verdicts || {};
+    return `<div ${idx ? 'style="margin-top:28px;padding-top:24px;border-top:1px solid var(--line)"' : ""}>
     <div class="board-head">
-      <div><h3>Latest run</h3><div class="note">${esc(engineLabel(run, "source"))} to ${esc(engineLabel(run, "target"))}${run.mode === "rehearsal" ? ", local rehearsal" : ""}${run.recorded ? ", recorded" : ""}, ${esc(when(run.finished_at))}</div></div>
-      <div class="big">${summary.movable}<small> of ${summary.queries} queries can move</small></div>
+      <div><h3>${esc(SCENARIO[run.target.location] || run.target.location)}</h3><div class="note">${esc(engineLabel(run, "source"))} to ${esc(engineLabel(run, "target"))}, live run, ${esc(when(run.finished_at))}</div></div>
+      <div class="big">${sm.movable}<small> of ${sm.queries} queries can move</small></div>
     </div>
-    ${verdictBar(v, summary.queries)}
+    ${verdictBar(v, sm.queries)}
     <div class="stats" style="margin-top:18px">
       <div class="stat"><div class="k">Moved after a proven rewrite</div><div class="v">${v.rewrite || 0}</div></div>
       <div class="stat"><div class="k">Stay on Databricks</div><div class="v">${v.keep || 0}</div></div>
-      <div class="stat"><div class="k">Tables aligned</div><div class="v">${summary.tables_usable}/${summary.tables}</div></div>
-      <div class="stat"><div class="k">Tables that changed type</div><div class="v">${summary.tables_retyped}</div></div>
+      <div class="stat"><div class="k">Tables aligned</div><div class="v">${sm.tables_usable}/${sm.tables}</div></div>
+      <div class="stat"><div class="k">Tables that changed type</div><div class="v">${sm.tables_retyped}</div></div>
     </div>
-    <div style="margin-top:16px"><a href="/app/queries?run=${encodeURIComponent(run.id)}" data-nav>See every query</a></div>`;
+    <div style="margin-top:14px"><a href="/app/queries?run=${encodeURIComponent(run.id)}" data-nav>See every query</a></div></div>`;
+  }).join("");
 }
 
 // ------------------------------------------------------------------ app shell
@@ -627,7 +633,7 @@ function guardCard(g) {
     <tr><td class="mono">${esc(r.column)}</td><td class="muted">${esc(r.why)}</td>
     <td class="num">${r.total == null ? "" : fmt(r.total)}</td><td class="num">${r.invalid == null ? (r.error ? "" : "") : fmt(r.invalid)}</td>
     <td>${r.error ? `<span class="error">${esc(r.error)}</span>` : r.invalid ? `<span class="tag v-keep">Broken</span>` : `<span class="tag v-move">Holds</span>`}</td></tr>
-    ${r.sample && r.sample.length ? `<tr><td></td><td colspan="4"><div class="note" style="margin-bottom:6px">Rows Zetaris flags (${esc(r.expression)})</div><div class="scroll"><table class="t"><thead><tr>${g.columns.map((c) => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${r.sample.map((x) => `<tr>${x.map((v, i) => `<td class="mono" style="${g.columns[i] === r.column ? "background:var(--bad-wash)" : ""}">${esc(v ?? "NULL")}</td>`).join("")}</tr>`).join("")}</tbody></table></div></td></tr>` : ""}`).join("");
+    ${r.sample && r.sample.length ? `<tr><td></td><td colspan="4"><div class="note" style="margin-bottom:6px">Rows Zetaris flags (${esc(r.expression)})</div>${(() => { const keep = g.columns.map((c, i) => i).filter((i) => i === 0 || g.columns[i] === r.column || /_(state|city|id)$/.test(g.columns[i])); return `<table class="t" style="width:auto"><thead><tr>${keep.map((i) => `<th>${esc(g.columns[i])}</th>`).join("")}</tr></thead><tbody>${r.sample.map((x) => `<tr>${keep.map((i) => `<td class="mono" style="${g.columns[i] === r.column ? "background:var(--bad-wash)" : ""}">${esc(x[i] ?? "NULL")}</td>`).join("")}</tr>`).join("")}</tbody></table>`; })()}</td></tr>` : ""}`).join("");
   return `<div class="panel"><div class="panel-head"><div><h2 class="mono">${esc(g.table)}</h2><div class="sub">rules from ${esc(g.source)}, enforced by Zetaris on ${esc(g.candidate)}, ${esc(when(g.at))}, ${ms(g.ms)}</div></div>${head}</div>
     ${g.error ? `<div class="panel-body"><div class="error">${esc(g.error)}</div></div>` : `<div class="scroll"><table class="t"><thead><tr><th>Column</th><th>Rule, from Databricks</th><th class="num">Rows checked</th><th class="num">Rows breaking it</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="panel-body"><details><summary class="note" style="cursor:pointer">The Zetaris statements (USL and DQ)</summary><pre class="sql" style="margin-top:8px">${esc((g.sql || []).join(";\n\n"))}</pre></details></div>`}</div>`;
