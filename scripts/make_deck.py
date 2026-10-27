@@ -106,15 +106,21 @@ slides = [
       <div><p class=big2>{len(diff_tables)} of 24 tables differ in row count before a single query runs.</p>
       <p class=lead2>Comparing queries over these tables would have compared two datasets, not two engines. Alignment blocks them, so the live run loads the same parquet files into both engines instead.</p></div>
     </div>""",
+    """<div class=eye>The CSV-export path, live on Zetaris</div><h2>A real migration path, and what Zetaris caught.</h2>
+    <div class=cols3>
+      <div class=card><b>3 rewrites proven</b><p>Loading the same tables from CSV with inferred types turned DECIMAL into DOUBLE. q7, q26 and q28 returned different averages; casting the columns back on Zetaris reproduced Databricks' exact rows.</p></div>
+      <div class=card><b>1,351 rows, found in one query</b><p>Zetaris read customer_address from Databricks itself (its bundled Databricks JDBC driver) and from the CSV copy at once. Every differing row is a ZIP code that lost its leading zero: 09082 became 9082.</p></div>
+      <div class=card><b>Enforced by Zetaris</b><p>Nirvana measured each column on Databricks and installed it as Zetaris data-quality rules on the migrated table. The ZIP rule breaks on the same 1,351 rows, and keeps checking after every later load.</p></div>
+    </div>""",
     """<div class=eye>Sponsor technology, load-bearing</div><h2>Remove any one and a step stops.</h2>
     <div class=cols3>
-      <div class=card><b>Zetaris · the data layer</b><p>The 24 parquet files are Lightning filestore tables, read in place. Every query, table profile and rewrite runs through the REST SQL endpoint. One federated query across local disk and S3 shows which rows differ between two copies.</p></div>
+      <div class=card><b>Zetaris · the data layer</b><p>The 24 parquet files are Lightning filestore tables, read in place. Every query, table profile and rewrite runs through the REST SQL endpoint. It reads Databricks over JDBC in the same query as its own tables, and enforces the source's measured shape as DQ rules.</p></div>
       <div class=card><b>Meterless · H-MEM and Nightshift</b><p>H-MEM stores each proven fix and each order-tie proof with its query features. Matching queries try recalled fixes first and skip re-runs already settled; a fix that fails loses confidence. Nightshift is the only AI provider, on 127.0.0.1:8088, under the 0.90 provider contract.</p></div>
       <div class=card><b>NVIDIA Nemotron</b><p>Nightshift relays rewrite proposals to a free Nemotron for differences no rule explains. No local model runs. The judge decides on the rows.</p></div>
     </div>""",
     """<div class=eye>Engineering</div><h2>Built to be checked.</h2>
     <div class=cols3>
-      <div class=card><b>1,230 tests</b><p>Real SQL on DuckDB, the real H-MEM engine, every TPC-DS query parsed and qualified, tampered tables caught, property tests on the canonicaliser.</p></div>
+      <div class=card><b>1,284 tests</b><p>Real SQL on DuckDB, the real H-MEM engine, every TPC-DS query parsed and qualified, tampered tables caught, property tests on the canonicaliser.</p></div>
       <div class=card><b>Receipts</b><p>Each run gets a SHA-256 over query hashes, both fingerprints, verdicts and rewrites. Importing an edited recording is refused.</p></div>
       <div class=card><b>A dashboard, not a slide</b><p>Start a run, watch 24 tables and 103 queries fill in live, open any query to its rows, fingerprints, rewrite and every execution step.</p></div>
     </div>""",

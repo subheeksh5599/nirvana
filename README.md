@@ -62,6 +62,9 @@ What Zetaris actually does in Nirvana:
 7. **Keeps checking after the move.** Nirvana turns what it measured on Databricks into Zetaris data-quality rules on the migrated table (Unified Semantic Layer + `REGISTER DQ` + `RUN DQ`), so Zetaris itself flags rows that break the source's shape, today and after every later load (`src/nirvana/guard.py`, the Guard rules page).
 8. **Describes its own results.** When Zetaris returns rows without column types, Nirvana asks Zetaris itself with `INFER SQLTABLE COLUMNS`, so a number is compared as a number and a date as a date.
 
+6. **Reads Databricks directly.** Zetaris ships with the Databricks JDBC driver, so we registered the Databricks warehouse inside Zetaris as a datasource. Zetaris can then compare a Databricks table and one of its own tables row by row in a single query.
+7. **Keeps watching after the move.** Nirvana measures every column on Databricks (are there empty values, how long is the text, what range do the numbers have) and installs each measurement in Zetaris as a data-quality rule on the migrated table. Zetaris runs the rules itself and lists the rows that break them. On the CSV-loaded copy of `customer_address`, the ZIP-code rule ("always 5 characters, like on Databricks") flagged 1,351 addresses whose leading zero was lost, and those are exactly the rows the Databricks-to-Zetaris row comparison found.
+
 Something Zetaris helped us find on day one: the TPC-DS sample that ships with the Zetaris platform (`TPCDS_DB`) is not the same data as Databricks' own TPC-DS sample. Seven of the 24 tables have different row counts (for example `catalog_page`: 11,718 rows on Databricks, 311,718 on Zetaris). Nirvana's table check caught this before a single query ran, which is exactly the mistake it exists to prevent. For the real run we put the same files on both engines.
 
 ### Meterless: memory (H-MEM) and the AI connection (Nightshift)
