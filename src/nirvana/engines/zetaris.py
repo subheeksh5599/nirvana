@@ -21,7 +21,7 @@ DEFAULT_REST_URL = "http://localhost:8888/api/v1.0"
 
 
 def _column_specs(payload: dict[str, Any]) -> tuple[list[str] | None, list[str] | None]:
-    for key in ("columns", "schema", "metadata", "header", "columnNames", "fields"):
+    for key in ("headers", "columns", "schema", "metadata", "header", "columnNames", "fields"):
         spec = payload.get(key)
         if isinstance(spec, dict) and isinstance(spec.get("fields"), list):
             spec = spec["fields"]
@@ -148,5 +148,5 @@ class ZetarisEngine(Engine):
         t_idx = next((i for i, n in enumerate(lower) if "type" in n), None)
         if t_idx is None:
             return None
-        found = [str(r[t_idx]).lower() for r in rs.rows if r[t_idx] is not None]
+        found = [str(r[t_idx]).strip().strip('"').strip().lower() for r in rs.rows if r[t_idx] is not None]
         return found if len(found) == width else None

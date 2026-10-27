@@ -345,3 +345,30 @@ def test_rehearsal_pair_types_differ_but_rows_match():
 
 def test_duckdb_ping():
     assert DuckDBEngine().ping().ok
+
+
+def test_zetaris_headers_key_names_the_columns():
+    from nirvana.engines.zetaris import parse_payload
+
+    names, types, rows = parse_payload({"headers": ["a", "b"], "data": [["1", "x"]], "total": 1, "timeUsed": 3})
+    assert names == ["a", "b"] and types is None and rows == [["1", "x"]]
+
+
+def test_zetaris_headers_with_no_rows_still_name_the_columns():
+    from nirvana.engines.zetaris import parse_payload
+
+    names, _, rows = parse_payload({"headers": ["s_store_sk", "s_store_id"], "data": [], "total": 0})
+    assert names == ["s_store_sk", "s_store_id"] and rows == []
+
+
+@pytest.mark.parametrize("raw,want", [('"long"', "long"), ('"decimal(5,2)"', "decimal(5,2)"), ("date", "date"), (' "string" ', "string")])
+def test_zetaris_infer_types_are_unquoted(raw, want):
+    import httpx
+
+    from nirvana.engines.zetaris import ZetarisEngine
+
+    def handler(req):
+        return httpx.Response(200, json={"headers": ["name", "dataType"], "data": [["c", raw]]})
+
+    e = ZetarisEngine("k", transport=httpx.MockTransport(handler))
+    assert e.output_types("SELECT c FROM t", 1) == [want]
