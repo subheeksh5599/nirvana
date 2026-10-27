@@ -1,0 +1,86 @@
+<!doctype html><meta charset=utf-8><title>Nirvana</title><style>
+@font-face{font-family:Inter;src:url(../web/dist/assets/fonts/Inter-latin.woff2) format('woff2');font-weight:100 900}
+@font-face{font-family:JBM;src:url(../web/dist/assets/fonts/JetBrainsMono-latin.woff2) format('woff2')}
+@page{size:1920px 1080px;margin:0}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,sans-serif;color:#131311;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+section{width:1920px;height:1080px;padding:120px 140px;position:relative;page-break-after:always;overflow:hidden;background:#fff;border-bottom:1px solid #eee}
+section::before{content:"";position:absolute;left:140px;top:64px;width:22px;height:22px;border-radius:6px;background:#131311;box-shadow:inset 0 0 0 6px #131311,inset 0 0 0 11px #fff}
+.eye{font-size:24px;color:#8C8C82;margin-bottom:14px}
+h1.hero{font-size:104px;line-height:1.04;letter-spacing:-.035em;font-weight:650;margin:170px 0 40px}
+h2{font-size:64px;letter-spacing:-.03em;font-weight:650;margin:0 0 56px;line-height:1.08}
+.lead{font-size:34px;color:#56564E;max-width:1300px;line-height:1.4}
+.lead2{font-size:26px;color:#56564E;line-height:1.5;max-width:1500px}
+.big2{font-size:36px;line-height:1.35;font-weight:550;margin:0 0 28px}
+.foot{position:absolute;left:140px;bottom:70px;font-size:22px;color:#8C8C82}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.cols4{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.card{border:2px solid #E8E8E3;border-radius:20px;padding:36px 34px;background:#FAFAF8}
+.card b{display:block;font-size:34px;margin-bottom:14px;letter-spacing:-.01em}
+.card p{font-size:27px;line-height:1.5;color:#56564E;margin:0}
+.n1{font-family:JBM,monospace;color:#8C8C82;font-size:22px;display:block;margin-bottom:18px}
+.num{font-family:JBM,monospace}
+.bar{display:flex;height:34px;border-radius:999px;overflow:hidden;background:#F3F3F0;margin:10px 0 18px}
+.bar span{display:block;height:100%}
+.legend{display:flex;gap:34px;font-size:24px;color:#56564E;margin-bottom:50px}
+.legend i{display:inline-block;width:16px;height:16px;border-radius:4px;margin-right:10px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-bottom:44px}
+.stat{border:2px solid #E8E8E3;border-radius:16px;padding:24px 28px}
+.stat .k{font-size:21px;color:#56564E}.stat .v{font-family:JBM,monospace;font-size:48px;font-weight:600;margin-top:6px}.stat .v.sm{font-size:22px;margin-top:18px}
+table.t{border-collapse:collapse;width:100%;font-size:23px}
+table.t th{text-align:left;font-weight:500;color:#56564E;padding:14px 18px;border-bottom:2px solid #E8E8E3;background:#FAFAF8}
+table.t td{padding:13px 18px;border-bottom:1px solid #E8E8E3;vertical-align:top}
+.m{font-family:JBM,monospace}.tag{white-space:nowrap}.n{text-align:right;font-family:JBM,monospace}.tag{font-weight:650}
+</style><section><h1 class=hero>Know which queries can leave Databricks<br>before they do.</h1>
+    <p class=lead>Nirvana runs every query on Databricks and on Zetaris against the same data, compares the answers row by row, and keeps a rewrite only when it returns the exact rows.</p>
+    <div class=foot>Nirvana · Open Agent Hackathon 2026 · github.com/subheeksh5599/nirvana</div></section><section><div class=eye>The problem</div><h2>A migration fails on answers, not on syntax.</h2>
+    <div class=cols3>
+      <div class=card><b>The push</b><p>Azure Databricks Standard workspaces are being moved to Premium from 1 October 2026. Zetaris puts the increase at 35% or more per workspace.</p></div>
+      <div class=card><b>The risk</b><p>A query that runs on a new engine can still return a different answer: a DECIMAL read as DOUBLE, 7 / 2 = 3, NULLs sorted to the other end of a top 10.</p></div>
+      <div class=card><b>The gap</b><p>Table diffs prove the data moved. Nobody proves, query by query, that the workload still gives the same answers, and which rewrite fixes the ones that do not.</p></div>
+    </div></section><section><div class=eye>How it works</div><h2>Four steps. Every one executed.</h2>
+    <div class=cols4>
+      <div class=card><span class=n1>01</span><b>Align the inputs</b><p>Both engines profile every table: row count, and per column non-null count, MIN, MAX and an exact SUM. A query over a table that differs is blocked, not judged.</p></div>
+      <div class=card><span class=n1>02</span><b>Run on both</b><p>The same query runs on Databricks and on Zetaris Lightning, which reads the parquet files in place.</p></div>
+      <div class=card><span class=n1>03</span><b>Compare every row</b><p>Results become canonical tokens with exact decimals and a SHA-256 fingerprint. A changed value is named by its column.</p></div>
+      <div class=card><span class=n1>04</span><b>Prove the cause</b><p>Rewrites run on Zetaris until one returns the source's exact rows. Otherwise the query stays on Databricks.</p></div>
+    </div></section><section><div class=eye>The guarantee</div><h2>No verdict comes from a model.</h2>
+    <div class=cols2>
+      <div><p class=big2>A model may only propose SQL. The judge runs the proposal on Zetaris and keeps it only if its rows equal Databricks' rows.</p>
+      <p class=lead2>A proposal with the right shape and the wrong rows is refused (test_wrong_advisor_rewrite_is_refused). An offline model ends a query in "keep", never in a guess.</p></div>
+      <table class=t><tr><th>Verdict</th><th>Meaning</th></tr>
+      <tr><td style='color:#0F7A46'><b>move</b></td><td>same answer on both engines</td></tr>
+      <tr><td style='color:#4C9A6E'><b>move_note</b></td><td>same up to float noise or tied rows, proven by extra runs</td></tr>
+      <tr><td style='color:#145FE4'><b>rewrite</b></td><td>moves after a rewrite proven on the rows</td></tr>
+      <tr><td style='color:#B02A22'><b>keep</b></td><td>no rewrite reproduced the answer</td></tr>
+      <tr><td style='color:#56564E'><b>blocked</b></td><td>input differs, or the source refuses the query</td></tr></table>
+    </div></section><section><div class=eye>The live run · 27 Oct 2026, 18:29 UTC</div><h2><span class=num>102</span> of 103 TPC-DS queries can move.</h2>
+    <div class="bar"><span style="width:93.20388349514563%;background:#0F7A46"></span><span style="width:5.825242718446602%;background:#4C9A6E"></span><span style="width:0.9708737864077669%;background:#B9B9B0"></span></div><div class="legend"><span><i style="background:#0F7A46"></i>Same answer <b>96</b></span><span><i style="background:#4C9A6E"></i>Same, with a note <b>6</b></span><span><i style="background:#B9B9B0"></i>Cannot be judged <b>1</b></span></div>
+    <div class=stats>
+      <div class=stat><div class=k>Tables aligned</div><div class=v>24/24</div></div>
+      <div class=stat><div class=k>Databricks time, all queries</div><div class=v>247 s</div></div>
+      <div class=stat><div class=k>Zetaris time, all queries</div><div class=v>272 s</div></div>
+      <div class=stat><div class=k>Run</div><div class="v sm">run-20261027-181712-e4eb1f</div></div>
+    </div>
+    <p class=lead2>Databricks Free Edition (serverless SQL warehouse) against Zetaris Lightning (local docker), the same 24 TPC-DS sf1 parquet files on both. Query texts: Apache Spark's TPC-DS set, unchanged.</p></section><section><div class=eye>Queries that did not simply match</div><h2>Every exception carries its reason.</h2>
+    <table class=t><tr><th>Query</th><th>Verdict</th><th>Why</th></tr><tr><td class=m>q6</td><td><span class=tag style='color:#4C9A6E'>Same, with a note</span></td><td>same rows; the order differs only where the ORDER BY does not decide it</td></tr><tr><td class=m>q30</td><td><span class=tag style='color:#B9B9B0'>Cannot be judged</span></td><td>the source cannot run this query: FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or …</td></tr><tr><td class=m>q56</td><td><span class=tag style='color:#4C9A6E'>Same, with a note</span></td><td>same rows; the order differs only where the ORDER BY does not decide it</td></tr><tr><td class=m>q58</td><td><span class=tag style='color:#4C9A6E'>Same, with a note</span></td><td>floating-point differences only, largest relative gap 9.52e-11</td></tr><tr><td class=m>q64</td><td><span class=tag style='color:#4C9A6E'>Same, with a note</span></td><td>same rows; the order differs only where the ORDER BY does not decide it</td></tr><tr><td class=m>q75</td><td><span class=tag style='color:#4C9A6E'>Same, with a note</span></td><td>same rows; the order differs only where the ORDER BY does not decide it</td></tr><tr><td class=m>q77</td><td><span class=tag style='color:#4C9A6E'>Same, with a note</span></td><td>same rows; the order differs only where the ORDER BY does not decide it</td></tr></table></section><section><div class=eye>What alignment caught on day one</div><h2>Zetaris' bundled TPC-DS sample is not Databricks' sample.</h2>
+    <div class=cols2>
+      <table class=t><tr><th>Table</th><th class=n>Databricks samples</th><th class=n>Zetaris TPCDS_DB</th><th class=n>Gap</th></tr><tr><td class=m>catalog_page</td><td class=n>11,718</td><td class=n>311,718</td><td class=n>+300,000</td></tr><tr><td class=m>catalog_returns</td><td class=n>143,672</td><td class=n>144,067</td><td class=n>+395</td></tr><tr><td class=m>catalog_sales</td><td class=n>1,439,935</td><td class=n>1,621,741</td><td class=n>+181,806</td></tr><tr><td class=m>store_returns</td><td class=n>288,279</td><td class=n>287,514</td><td class=n>-765</td></tr><tr><td class=m>store_sales</td><td class=n>2,879,789</td><td class=n>2,880,404</td><td class=n>+615</td></tr><tr><td class=m>web_returns</td><td class=n>71,772</td><td class=n>71,763</td><td class=n>-9</td></tr><tr><td class=m>web_sales</td><td class=n>718,931</td><td class=n>719,380</td><td class=n>+449</td></tr></table>
+      <div><p class=big2>7 of 24 tables differ in row count before a single query runs.</p>
+      <p class=lead2>Comparing queries over these tables would have compared two datasets, not two engines. Alignment blocks them, so the live run loads the same parquet files into both engines instead.</p></div>
+    </div></section><section><div class=eye>Sponsor technology, load-bearing</div><h2>Remove any one and a step stops.</h2>
+    <div class=cols3>
+      <div class=card><b>Zetaris · the data layer</b><p>The 24 parquet files are Lightning filestore tables, read in place. Every query, table profile and rewrite runs through the REST SQL endpoint. Result types come from INFER SQLTABLE COLUMNS.</p></div>
+      <div class=card><b>Meterless · H-MEM and Nightshift</b><p>H-MEM stores each proven fix and each order-tie proof with its query features. Matching queries try recalled fixes first and skip re-runs already settled; a fix that fails loses confidence. Nightshift is the only AI provider, on 127.0.0.1:8088, under the 0.90 provider contract.</p></div>
+      <div class=card><b>NVIDIA Nemotron</b><p>Nightshift relays rewrite proposals to a free Nemotron for differences no rule explains. No local model runs. The judge decides on the rows.</p></div>
+    </div></section><section><div class=eye>Engineering</div><h2>Built to be checked.</h2>
+    <div class=cols3>
+      <div class=card><b>1,230 tests</b><p>Real SQL on DuckDB, the real H-MEM engine, every TPC-DS query parsed and qualified, tampered tables caught, property tests on the canonicaliser.</p></div>
+      <div class=card><b>Receipts</b><p>Each run gets a SHA-256 over query hashes, both fingerprints, verdicts and rewrites. Importing an edited recording is refused.</p></div>
+      <div class=card><b>A dashboard, not a slide</b><p>Start a run, watch 24 tables and 103 queries fill in live, open any query to its rows, fingerprints, rewrite and every execution step.</p></div>
+    </div></section><section><div class=eye>Honesty</div><h2>What this is, and what it is not.</h2>
+    <div class=cols2>
+      <div class=card><b>Declared pre-existing work</b><p>None of our own: Nirvana was started during the hackathon. Third-party parts used unchanged: Meterless H-MEM (vendored at 1742dec), the 103 TPC-DS texts from Apache Spark (3153f1e), DuckDB's dsdgen for the data, the Zetaris docker platform.</p></div>
+      <div class=card><b>Limits</b><p>Results over 100,000 rows are truncated and marked. Rules cover four causes; anything else goes to the model or ends in keep. Nirvana reports verdicts and timings; it makes no dollar claim of its own.</p></div>
+    </div>
+    <div class=foot>github.com/subheeksh5599/nirvana · Apache-2.0</div></section>
