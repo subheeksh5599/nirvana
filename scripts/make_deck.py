@@ -108,7 +108,7 @@ slides = [
     </div>""",
     """<div class=eye>Sponsor technology, load-bearing</div><h2>Remove any one and a step stops.</h2>
     <div class=cols3>
-      <div class=card><b>Zetaris · the data layer</b><p>The 24 parquet files are Lightning filestore tables, read in place. Every query, table profile and rewrite runs through the REST SQL endpoint. Result types come from INFER SQLTABLE COLUMNS.</p></div>
+      <div class=card><b>Zetaris · the data layer</b><p>The 24 parquet files are Lightning filestore tables, read in place. Every query, table profile and rewrite runs through the REST SQL endpoint. One federated query across local disk and S3 shows which rows differ between two copies.</p></div>
       <div class=card><b>Meterless · H-MEM and Nightshift</b><p>H-MEM stores each proven fix and each order-tie proof with its query features. Matching queries try recalled fixes first and skip re-runs already settled; a fix that fails loses confidence. Nightshift is the only AI provider, on 127.0.0.1:8088, under the 0.90 provider contract.</p></div>
       <div class=card><b>NVIDIA Nemotron</b><p>Nightshift relays rewrite proposals to a free Nemotron for differences no rule explains. No local model runs. The judge decides on the rows.</p></div>
     </div>""",
