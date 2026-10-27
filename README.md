@@ -4,7 +4,7 @@
 
 ### Before a query leaves Databricks, it runs on both engines, and only a rewrite proven on the rows is kept.
 
-[![tests](https://img.shields.io/badge/tests-1284%20passing-2ea44f)](#tests)
+[![tests](https://img.shields.io/badge/tests-1288%20passing-2ea44f)](#tests)
 [![workload](https://img.shields.io/badge/workload-103%20TPC--DS%20queries-1f6feb)](#the-workload)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![stack](https://img.shields.io/badge/Zetaris%20%C2%B7%20Meterless%20%C2%B7%20Nemotron-engines-6f42c1)](#where-each-sponsor-technology-is-load-bearing)
@@ -175,7 +175,7 @@ uv run pytest -q
 ```
 
 ```
-1284 passed in 12.40s
+1288 passed in 13.41s
 ```
 
 The suite runs real SQL. Each test of the judge sets up DuckDB connections over the same generated TPC-DS rows and changes one documented thing on the target: `SET SESSION integer_division = true`, `SET SESSION default_null_order = 'nulls_last'`, the DECIMAL columns stored as REAL, or the rows of `item` stored in shuffled order. Then it asserts the cause the judge proves. None of these tests imitates an engine. HTTP doubles stand in only where a vendor's wire format is under test (Databricks statements API, Zetaris REST, Meterless provider), and they speak the shapes those vendors document.
@@ -378,7 +378,7 @@ The 103 TPC-DS query texts as Apache Spark renders them (99 templates; 14, 23, 2
 
 | Claim | State |
 |---|---|
-| 1,284 tests pass, executing real SQL on DuckDB and the real H-MEM engine | real (`uv run pytest -q`) |
+| 1,288 tests pass, executing real SQL on DuckDB and the real H-MEM engine | real (`uv run pytest -q`) |
 | Full 103-query rehearsal run | real, two local DuckDB engines, labelled rehearsal |
 | Databricks client | real: ran all 103 queries and 24 table profiles on a Databricks Free Edition serverless warehouse |
 | Zetaris client | real: ran all 103 queries, 24 table profiles and the filestore registrations on Zetaris Lightning (local docker, hackathon build); the live response shape (`headers` + `data`) is pinned in tests |
@@ -418,7 +418,7 @@ The 103 TPC-DS query texts as Apache Spark renders them (99 templates; 14, 23, 2
 
 ## Tech stack
 
-Python 3.12, FastAPI, httpx, sqlglot 30, DuckDB 2.0, SQLite, pytest and Hypothesis (1,284 tests). Node with tsx runs the vendored Meterless H-MEM reference engine. Zetaris Lightning (REST), the Databricks SQL Statement Execution API, and the Meterless provider contract 0.90.0 with NVIDIA Nemotron.
+Python 3.12, FastAPI, httpx, sqlglot 30, DuckDB 2.0, SQLite, pytest and Hypothesis (1,288 tests). Node with tsx runs the vendored Meterless H-MEM reference engine. Zetaris Lightning (REST), the Databricks SQL Statement Execution API, and the Meterless provider contract 0.90.0 with NVIDIA Nemotron.
 
 ## Project layout
 
@@ -433,7 +433,7 @@ src/nirvana/
 web/dist/                           the web app (plain HTML, CSS and JS, fonts served locally)
 bridges/hmem.ts                     JSON-lines bridge to H-MEM
 vendor/meterless/hmem/              H-MEM reference engine, unchanged (UPSTREAM.md)
-tests/                              1,284 tests
+tests/                              1,288 tests
 recordings/                         finished live runs served in recorded mode
 ```
 
@@ -459,7 +459,7 @@ The live mode needs both engines reachable, so it runs where Zetaris runs. Recor
 
 ```
 uv run pytest -q
-1284 passed in 12.40s
+1288 passed in 13.41s
 ```
 
 | File | What it covers |
