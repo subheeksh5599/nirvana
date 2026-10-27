@@ -99,7 +99,7 @@ def test_chain_none_when_nothing_applies():
 
 
 def test_catalogue_names():
-    assert set(rw.CATALOGUE) == {"cast_drifted_columns", "cast_divisions_to_double", "explicit_null_order", "transpile_from_source"}
+    assert set(rw.CATALOGUE) == {"cast_drifted_columns", "cast_divisions_to_double", "explicit_null_order", "transpile_from_source", "apply_repairs"}
     assert all(r.describe for r in rw.CATALOGUE.values())
 
 
@@ -123,3 +123,28 @@ def test_null_order_rewrite_parses_for_tpcds(q):
     if out is not None:
         assert "NULLS" in out
         assert sqlglot.parse_one(out, read="spark") is not None
+
+
+def test_apply_repairs_reads_the_column_through_the_proven_expression():
+    out = rw.apply_repairs("SELECT ca_zip, COUNT(*) FROM customer_address GROUP BY ca_zip", {"repairs": {"ca_zip": "lpad(cast(x AS string), 5, '0')"}})
+    assert out.count("LPAD(CAST(ca_zip AS STRING), 5, '0')") == 2
+
+
+def test_apply_repairs_keeps_table_qualifiers():
+    out = rw.apply_repairs("SELECT a.ca_zip FROM customer_address a", {"repairs": {"ca_zip": "lpad(cast(x AS string), 5, '0')"}})
+    assert "LPAD(CAST(a.ca_zip AS STRING), 5, '0')" in out
+
+
+def test_apply_repairs_without_repairs_or_columns_changes_nothing():
+    assert rw.apply_repairs("SELECT 1", {"repairs": {"ca_zip": "x"}}) is None
+    assert rw.apply_repairs("SELECT ca_zip FROM t", {}) is None
+
+
+def test_apply_repairs_on_real_rows():
+    import duckdb
+
+    c = duckdb.connect()
+    c.execute("CREATE TABLE t AS SELECT * FROM (VALUES (601), (2134), (94110)) v(ca_zip)")
+    sql = rw.apply_repairs("SELECT ca_zip FROM t ORDER BY ca_zip", {"repairs": {"ca_zip": "lpad(cast(x AS string), 5, '0')"}})
+    got = c.execute(sqlglot.transpile(sql, read="spark", write="duckdb")[0]).fetchall()
+    assert [r[0] for r in got] == ["00601", "02134", "94110"]

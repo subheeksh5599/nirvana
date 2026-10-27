@@ -35,6 +35,7 @@ CAUSE_OF = {
     "cast_divisions_to_double": "integer_division",
     "explicit_null_order": "null_ordering",
     "transpile_from_source": "dialect",
+    "apply_repairs": "proven_repair",
     "model": "model_rewrite",
 }
 
@@ -149,7 +150,9 @@ class Judge:
         rel_tol: float = 1e-9,
         max_rows: int = 100_000,
         clock: Callable[[], float] = time.time,
+        repairs: dict[str, str] | None = None,
     ) -> None:
+        self.repairs = {k.lower(): v for k, v in (repairs or {}).items()}
         self.source, self.target = source, target
         self.alignment = alignment or {}
         self.advisor, self.memory = advisor, memory
@@ -288,6 +291,8 @@ class Judge:
 
     def _candidate_order(self, cmp: Comparison | None, t_sql: str, target_error: str | None, drift: dict[str, str], feats: list[str]) -> list[str]:
         base: list[str] = []
+        if self.repairs and any(c.name.lower() in self.repairs for c in sqlglot.parse_one(t_sql, read="spark").find_all(exp.Column)):
+            base.append("apply_repairs")
         if target_error:
             base.append("transpile_from_source")
         if drift:
@@ -303,6 +308,7 @@ class Judge:
 
     def _try_rewrites(self, j, src: ResultSet, t_sql: str, ordered: bool, names: list[str], drift: dict[str, str], steps: list[Step], feats: list[str]):
         ctx = {
+            "repairs": self.repairs,
             "drift": drift,
             "source_dialect": self._write_dialect(self.source),
             "target_dialect": self._write_dialect(self.target),

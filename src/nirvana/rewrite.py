@@ -117,6 +117,29 @@ def cast_drifted_columns(sql: str, ctx: dict) -> str | None:
     return t.sql(dialect=DIALECT) if changed else None
 
 
+def apply_repairs(sql: str, ctx: dict) -> str | None:
+    """Read a column through a repair the investigating agent proved on every row:
+    ``ca_zip`` -> ``lpad(cast(ca_zip AS string), 5, '0')``. ``ctx['repairs']`` maps a lower-case
+    column name to a scalar expression over ``x``."""
+    repairs: dict[str, str] = ctx.get("repairs") or {}
+    if not repairs:
+        return None
+    trees = {k: sqlglot.parse_one(v, read=DIALECT) for k, v in repairs.items()}
+    t = _tree(sql)
+    changed = False
+    for col in list(t.find_all(exp.Column)):
+        name = col.name.lower()
+        if name not in trees:
+            continue
+        body = trees[name].copy()
+        for x in list(body.find_all(exp.Column)):
+            if x.name.lower() == "x":
+                x.replace(col.copy())
+        col.replace(exp.Paren(this=body))
+        changed = True
+    return t.sql(dialect=DIALECT) if changed else None
+
+
 def transpile_from_source(sql: str, ctx: dict) -> str | None:
     """Let sqlglot render the source-dialect text for the target dialect."""
     src, tgt = ctx.get("source_dialect"), ctx.get("target_dialect")
@@ -133,6 +156,7 @@ CATALOGUE: dict[str, Rewrite] = {
         Rewrite("cast_divisions_to_double", "make every division floating point", cast_divisions_to_double),
         Rewrite("explicit_null_order", "write the source's NULL placement into ORDER BY", explicit_null_order),
         Rewrite("transpile_from_source", "render the source dialect for the target", transpile_from_source),
+        Rewrite("apply_repairs", "read columns through the repairs the agent proved", apply_repairs),
     )
 }
 
