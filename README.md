@@ -4,7 +4,7 @@
 
 ### Before a query leaves Databricks, it runs on both engines, and only a rewrite proven on the rows is kept.
 
-[![tests](https://img.shields.io/badge/tests-1230%20passing-2ea44f)](#tests)
+[![tests](https://img.shields.io/badge/tests-1284%20passing-2ea44f)](#tests)
 [![workload](https://img.shields.io/badge/workload-103%20TPC--DS%20queries-1f6feb)](#the-workload)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![stack](https://img.shields.io/badge/Zetaris%20%C2%B7%20Meterless%20%C2%B7%20Nemotron-engines-6f42c1)](#where-each-sponsor-technology-is-load-bearing)
@@ -57,8 +57,10 @@ What Zetaris actually does in Nirvana:
 2. **Answers the table checks.** Before any query is compared, Nirvana asks both engines to describe every table: how many rows, and for each column the smallest value, the largest value, the exact total and how many values are filled in. If Zetaris and Databricks disagree about a table, every query that reads it is set aside as "blocked" instead of being judged on bad input.
 3. **Runs all 103 queries.** Each query is sent to Zetaris through its REST SQL endpoint (`/sql-editor/sqls/run`) with an API key, and the rows it returns are compared with Databricks' rows, value by value.
 4. **Runs every fix.** When the answers differ, every candidate fix is run *on Zetaris*. A fix is kept only if Zetaris then returns exactly the same rows as Databricks.
-5. **Shows which rows differ, across two stores, in one query.** This is the part only a federating engine can do. When two copies of a table disagree, Nirvana asks Zetaris to read both copies at once, even when they live in different places (one on local disk, one in a public S3 bucket), and return the rows each side is missing (`EXCEPT ALL` in both directions, so duplicates count). The dashboard's **Row diff** page runs it (`src/nirvana/federate.py`). On `catalog_page` it found that Zetaris' bundled sample holds **300,190 rows the Databricks files do not**, most of them one catalog page (179) repeated, and is missing 190 rows the files have.
-6. **Describes its own results.** When Zetaris returns rows without column types, Nirvana asks Zetaris itself with `INFER SQLTABLE COLUMNS`, so a number is compared as a number and a date as a date.
+5. **Reads Databricks itself.** The Databricks JDBC driver ships inside Zetaris, so `scripts/link_databricks.py` registers the Databricks warehouse as a Zetaris datasource (`CREATE DATASOURCE … jdbcdriver "com.databricks.client.jdbc.Driver"`), and each table becomes a datasource view. Zetaris can then put a Databricks table and one of its own in the same query.
+6. **Shows which rows differ, across two stores, in one query.** This is the part only a federating engine can do. When two copies of a table disagree, Nirvana asks Zetaris to read both copies at once, even when they live in different places (one on local disk, one in a public S3 bucket), and return the rows each side is missing (`EXCEPT ALL` in both directions, so duplicates count). The dashboard's **Row diff** page runs it (`src/nirvana/federate.py`). On `catalog_page` it found that Zetaris' bundled sample holds **300,190 rows the Databricks files do not**, most of them one catalog page (179) repeated, and is missing 190 rows the files have.
+7. **Keeps checking after the move.** Nirvana turns what it measured on Databricks into Zetaris data-quality rules on the migrated table (Unified Semantic Layer + `REGISTER DQ` + `RUN DQ`), so Zetaris itself flags rows that break the source's shape, today and after every later load (`src/nirvana/guard.py`, the Guard rules page).
+8. **Describes its own results.** When Zetaris returns rows without column types, Nirvana asks Zetaris itself with `INFER SQLTABLE COLUMNS`, so a number is compared as a number and a date as a date.
 
 Something Zetaris helped us find on day one: the TPC-DS sample that ships with the Zetaris platform (`TPCDS_DB`) is not the same data as Databricks' own TPC-DS sample. Seven of the 24 tables have different row counts (for example `catalog_page`: 11,718 rows on Databricks, 311,718 on Zetaris). Nirvana's table check caught this before a single query ran, which is exactly the mistake it exists to prevent. For the real run we put the same files on both engines.
 
@@ -170,7 +172,7 @@ uv run pytest -q
 ```
 
 ```
-1230 passed in 11.04s
+1284 passed in 12.40s
 ```
 
 The suite runs real SQL. Each test of the judge sets up DuckDB connections over the same generated TPC-DS rows and changes one documented thing on the target: `SET SESSION integer_division = true`, `SET SESSION default_null_order = 'nulls_last'`, the DECIMAL columns stored as REAL, or the rows of `item` stored in shuffled order. Then it asserts the cause the judge proves. None of these tests imitates an engine. HTTP doubles stand in only where a vendor's wire format is under test (Databricks statements API, Zetaris REST, Meterless provider), and they speak the shapes those vendors document.
@@ -333,6 +335,24 @@ At the very end, and only as a proposer. When every rule has failed, `ModelAdvis
 
 Total execution time: 247 s on Databricks and 272 s on Zetaris for the 103 queries. The run's receipt and every row fingerprint are in `recordings/run-20261027-181712-e4eb1f.json`; `NIRVANA_MODE=recorded uv run nirvana serve` serves it without either engine.
 
+### Second live run: the CSV-export migration path
+
+A common way data reaches a new engine is an export to CSV and a load with inferred types. `scripts/load_zetaris_csv.py` registers the same 24 tables on Zetaris from CSV files with `inferSchema`, as database `NIRVANA_CSV`, and the run compares Databricks against that (`run-20261027-220706-930bf6`, recorded):
+
+| Verdict | Queries | What happened |
+|---|---:|---|
+| blocked, `input_not_aligned` | 55 | `customer_address`, `store` and `web_site` changed: inference read ZIP codes and street numbers as integers, so `02134` became `2134` |
+| move_note, `float_noise` | 25 | DECIMAL columns became DOUBLE; the answers differ only in the last bits |
+| move | 19 | identical |
+| **rewrite, `type_drift`** | **3** | **q7, q26, q28**: the averages differ on Zetaris; reading the retyped columns back as `DECIMAL(7,2)` on Zetaris reproduces Databricks' exact rows |
+| keep, `unexplained` | 1 | q66: no rule reproduced the answer and Nemotron returned no usable proposal, so it stays on Databricks |
+
+47 of 103 can move, 3 of them only with the proven rewrite. 10 tables kept their rows but changed type, and 3 tables lost information.
+
+**Which rows, exactly.** On the Row diff page, Zetaris reads `customer_address` from Databricks itself (through the Databricks JDBC driver that ships with Zetaris, `scripts/link_databricks.py`) and from the CSV copy in the same query: **1,351 rows differ on each side**, and every one is a ZIP code that lost its leading zero (`09082` on Databricks, `9082` on Zetaris). The same page shows that Zetaris' bundled `catalog_page` sample has 300,190 rows Databricks does not.
+
+**Keeping it honest afterwards.** The Guard rules page measures every column of `customer_address` on Databricks (row count, NULLs, value ranges, text lengths), writes each measurement as a Zetaris data-quality rule on a Unified Semantic Layer table over the migrated copy (`COMPILE USL`, `ACTIVATE USL TABLE`, `REGISTER DQ`), and runs them with `RUN DQ`. 12 of 13 rules hold; `ca_zip_shape` (`length(cast(ca_zip AS string)) = 5`, because every ZIP on Databricks is 5 characters) breaks on **1,351 of 50,000 rows**, the same rows the federated diff found, and `SHOW DQ INVALID RECORD` lists them. The rules stay on Zetaris after Nirvana is gone (`src/nirvana/guard.py`).
+
 **H-MEM on the live pair.** The five order-tie queries were then run twice more with H-MEM on. In the first of those runs (`run-20261027-214018-c78072`), q6 and q75 proved order ties by running the explicit-NULL-order rewrite on Zetaris and stored that proof in H-MEM; q56, q64 and q77 recalled q6's proof and skipped the rewrite run. In the second run (`run-20261027-214316-14f1f0`) all five recalled it, and Zetaris time for the five queries fell from 32.2 s to 22.2 s with the same verdicts. Both runs are in `recordings/`.
 
 The first live attempt pointed Zetaris at its bundled `TPCDS_DB` sample instead. Alignment stopped it: 7 of 24 tables differ from Databricks' `samples.tpcds_sf1` in row count (`catalog_page` 11,718 vs 311,718; `catalog_sales` 1,439,935 vs 1,621,741; `store_sales` 2,879,789 vs 2,880,404), so every query over them would have compared two datasets rather than two engines.
@@ -355,12 +375,14 @@ The 103 TPC-DS query texts as Apache Spark renders them (99 templates; 14, 23, 2
 
 | Claim | State |
 |---|---|
-| 1,230 tests pass, executing real SQL on DuckDB and the real H-MEM engine | real (`uv run pytest -q`) |
+| 1,284 tests pass, executing real SQL on DuckDB and the real H-MEM engine | real (`uv run pytest -q`) |
 | Full 103-query rehearsal run | real, two local DuckDB engines, labelled rehearsal |
 | Databricks client | real: ran all 103 queries and 24 table profiles on a Databricks Free Edition serverless warehouse |
 | Zetaris client | real: ran all 103 queries, 24 table profiles and the filestore registrations on Zetaris Lightning (local docker, hackathon build); the live response shape (`headers` + `data`) is pinned in tests |
 | Full live run (Databricks Free Edition → Zetaris Lightning) | real, 27 Oct 2026, recorded in `recordings/` |
-| Rewrites on the live pair | **none were needed**: both engines are Spark-based and returned the same answers. The rewrite path is proven on real engines changed in one documented way each (`tests/test_judge.py`) and in the local rehearsal, not on this pair |
+| Rewrites on the live pair | none were needed when both engines read the same parquet files (both are Spark-based). On the CSV-export path, **3 rewrites were proven live on Zetaris** (q7, q26, q28, type drift) |
+| Row diff against Databricks itself | real: Zetaris reads the Databricks warehouse through its bundled Databricks JDBC driver in the same query as its own tables |
+| Guard rules | real: 13 Zetaris DQ rules on `customer_address`, run live; 1 broken on 1,351 rows |
 | Nemotron through Nightshift | real: one live proposal recorded during setup; in the full run no difference needed the model |
 | Cost figures | none: Nirvana reports verdicts and timings only; it makes no dollar claim of its own |
 
@@ -393,7 +415,7 @@ The 103 TPC-DS query texts as Apache Spark renders them (99 templates; 14, 23, 2
 
 ## Tech stack
 
-Python 3.12, FastAPI, httpx, sqlglot 30, DuckDB 2.0, SQLite, pytest and Hypothesis (1,230 tests). Node with tsx runs the vendored Meterless H-MEM reference engine. Zetaris Lightning (REST), the Databricks SQL Statement Execution API, and the Meterless provider contract 0.90.0 with NVIDIA Nemotron.
+Python 3.12, FastAPI, httpx, sqlglot 30, DuckDB 2.0, SQLite, pytest and Hypothesis (1,284 tests). Node with tsx runs the vendored Meterless H-MEM reference engine. Zetaris Lightning (REST), the Databricks SQL Statement Execution API, and the Meterless provider contract 0.90.0 with NVIDIA Nemotron.
 
 ## Project layout
 
@@ -408,7 +430,7 @@ src/nirvana/
 web/dist/                           the web app (plain HTML, CSS and JS, fonts served locally)
 bridges/hmem.ts                     JSON-lines bridge to H-MEM
 vendor/meterless/hmem/              H-MEM reference engine, unchanged (UPSTREAM.md)
-tests/                              1,230 tests
+tests/                              1,284 tests
 recordings/                         finished live runs served in recorded mode
 ```
 
@@ -434,7 +456,7 @@ The live mode needs both engines reachable, so it runs where Zetaris runs. Recor
 
 ```
 uv run pytest -q
-1230 passed in 11.04s
+1284 passed in 12.40s
 ```
 
 | File | What it covers |
