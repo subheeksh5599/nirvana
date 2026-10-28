@@ -4,7 +4,7 @@
 
 ### Before a query leaves Databricks, it runs on both engines, and only a rewrite proven on the rows is kept.
 
-[![tests](https://img.shields.io/badge/tests-1288%20passing-2ea44f)](#tests)
+[![tests](https://img.shields.io/badge/tests-1343%20passing-2ea44f)](#tests)
 [![workload](https://img.shields.io/badge/workload-103%20TPC--DS%20queries-1f6feb)](#the-workload)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![stack](https://img.shields.io/badge/Zetaris%20%C2%B7%20Meterless%20%C2%B7%20Nemotron-engines-6f42c1)](#where-each-sponsor-technology-is-load-bearing)
@@ -380,7 +380,19 @@ Live, on the CSV copy (`recordings/investigations.jsonl`):
 
 ### The overnight audit
 
-The **Overnight audit** page chains everything into one job you start before leaving (`src/nirvana/audit.py`): run all 103 queries against the chosen Zetaris copy, investigate every blocked table and kept query, re-judge the blocked queries with what was proven, install a Zetaris guard rule for every repaired column, and write a morning report (movable before and after, every repair, every guard rule and how many rows break it today, what is still open).
+The **Overnight audit** page chains everything into one job you start before leaving (`src/nirvana/audit.py`): run all 103 queries against the chosen Zetaris copy, investigate every blocked table and kept query, re-judge the blocked queries with what was proven, install a Zetaris guard rule for every repaired column, and write a morning report.
+
+Live, unattended, on the CSV copy (audit `7de1a91d4d`, `recordings/audits.jsonl`), 23:52 to 00:25 UTC:
+
+| Phase | Result |
+|---|---|
+| Run all 103 queries (`run-20261027-235200-349482`) | 47 of 103 can move |
+| Investigate | 3 of 3 blocked tables cleared; q66 not fixed |
+| Re-judge with the findings (`run-20261028-001401-862eb2`) | 53 of 55 now move |
+| Guard rules | 2 installed on Zetaris; the ZIP rule breaks on 1,351 of 50,000 rows |
+| Morning report | **47 → 100 of 103** can move; q30, q64, q66 stay on Databricks |
+
+H-MEM made the second pass faster. With the first night's findings recalled, `customer_address` took 2 steps instead of 4, and `store` and `web_site` took 1 step each instead of 2. The whole audit used 12 model calls, inside the free tier's 50 a day.
 
 **H-MEM on the live pair.** The five order-tie queries were then run twice more with H-MEM on. In the first of those runs (`run-20261027-214018-c78072`), q6 and q75 proved order ties by running the explicit-NULL-order rewrite on Zetaris and stored that proof in H-MEM; q56, q64 and q77 recalled q6's proof and skipped the rewrite run. In the second run (`run-20261027-214316-14f1f0`) all five recalled it, and Zetaris time for the five queries fell from 32.2 s to 22.2 s with the same verdicts. Both runs are in `recordings/`.
 
