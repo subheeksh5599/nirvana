@@ -11,3 +11,4 @@ var/
 node_modules/
 .DS_Store
 FRONTEND_SPEC.md
+DEMO_SCRIPT.md
