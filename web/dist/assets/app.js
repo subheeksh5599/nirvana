@@ -802,7 +802,7 @@ function auditCard(a) {
     ${(r.repairs || []).length ? `<div class="note" style="margin-bottom:4px">Repairs proven on every row</div>${r.repairs.map((x) => `<div class="mono note">${esc(x.table)}.${esc(x.column)} → ${esc(x.expression)}</div>`).join("")}` : ""}
     ${(r.same_values || []).length ? `<div class="note" style="margin:10px 0 4px">Columns proven unchanged (type only)</div><div class="mono note">${r.same_values.map((x) => esc(`${x.table}.${x.column}`)).join(", ")}</div>` : ""}
     ${(r.guards || []).length ? `<div class="note" style="margin:10px 0 4px">Guard rules now enforced by Zetaris</div>${r.guards.map((g) => `<div class="mono note">${esc(g.table)}.${esc(g.rule)}: ${fmt(g.breaking)} of ${fmt(g.rows)} rows break it today</div>`).join("")}` : ""}
-    ${(r.still_open || []).length ? `<div class="note" style="margin:10px 0 4px">Still open, staying on Databricks</div><div class="mono note">${r.still_open.map(esc).join(", ")}</div>` : ""}` : "";
+    ${(r.still_open || []).length ? `<div class="note" style="margin:10px 0 4px">Investigated without a fix (${r.queries - r.movable_after} queries stay on Databricks in total)</div><div class="mono note">${r.still_open.map(esc).join(", ")}</div>` : ""}` : "";
   return `<div class="panel"><div class="panel-head"><div><h2>Audit of ${esc(a.target_location)}</h2><div class="sub">started ${esc(when(a.started_at))}${a.finished_at ? `, finished ${esc(when(a.finished_at))} (${ms((a.finished_at - a.started_at) * 1000)})` : ""}</div></div>${st}</div>
     <div class="panel-body">${report}<ul class="timeline" style="margin-top:8px">${phases}</ul>${a.error ? `<div class="error">${esc(a.error)}</div>` : ""}</div></div>`;
 }

@@ -67,7 +67,7 @@ def test_the_full_sequence(tmp_path):
     assert (r["movable_before"], r["movable_after"], r["unblocked_by_agent"], r["fixed_by_agent"]) == (47, 50, 2, 1)
     assert r["repairs"] == [{"table": "addr", "column": "zip", "expression": "lpad(cast(x as string), 5, '0')"}]
     assert r["guards"] == [{"table": "addr", "rule": "zip_shape", "breaking": 1351, "rows": 50000}]
-    assert r["model_steps"] == 4 and r["still_open"] == []
+    assert r["model_steps"] == 4 and r["still_open"] == [] and r["staying"] == 53
 
 
 def test_nothing_cleared_skips_the_rejudge(tmp_path):

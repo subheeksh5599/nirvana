@@ -75,6 +75,7 @@ def morning_report(first: dict[str, Any], rejudge: dict[str, Any] | None, invs: 
         "guards": [{"table": g["table"], "rule": r["name"], "breaking": r["invalid"], "rows": r["total"]} for g in guards for r in g.get("rules", [])],
         "model_steps": sum(len(i.get("steps", [])) for i in invs),
         "still_open": [i["subject"] for i in invs if not i.get("cleared")],
+        "staying": n - (before + unblocked + fixed),
     }
 
 
