@@ -1,0 +1,42 @@
+id|start|window_end|text
+C01|0.6|5.2|This is Nirvana's landing page. It leads with two real runs.
+C02|5.7|14.0|Loaded from CSV exports, forty-seven of a hundred and three queries could move. From identical parquet files, a hundred and two.
+C03|14.6|25.6|Every verdict comes from rows both engines really returned. Align the inputs, run on both, compare every row, and prove the cause.
+C04|26.8|35.8|Step one, start a check. The latest result is the CSV migration, where fifty-six queries still need a closer look.
+C05|36.4|38.6|I'll check query seven.
+C06|39.2|49.4|Nirvana first measures every table the query reads, on both engines. Row counts, nulls, minimums, maximums, and exact sums.
+C07|50.0|58.0|If any table differed, the query would be blocked, not judged. Comparing answers over different data proves nothing.
+C08|58.8|66.0|Each table matches. Customer demographics alone has almost two million rows on each side.
+C09|66.8|77.0|Then the query runs on Databricks and on Zetaris, and every row of both answers is compared.
+C10|77.8|84.0|Query seven moves. Same answer on both engines.
+C11|84.6|92.0|Here's the proof. A hundred rows on each side, the same fingerprint on both, and no column that differs.
+C12|92.6|100.2|Below are the exact query texts each engine ran, so anyone can repeat the check.
+C13|100.8|108.2|Now the harder case. Back to the CSV migration, with fifty-six queries waiting. Let's hand them to the agent.
+C14|108.9|119.8|Step three, fix with the agent. It lists what blocked the migration. Three tables differ between the engines, and query sixty-six gives an answer no rule could fix.
+C15|123.4|133.6|All three tables are already proven. The agent explained every difference, and this button re-checks the fifty-five queries they blocked.
+C16|134.4|145.2|I asked the agent to try query sixty-six again, live. NVIDIA Nemotron, running through Meterless Nightshift, decides what to check next.
+C17|146.0|155.2|Before its first step, it asked Meterless H-MEM what it already knew. H-MEM recalled one earlier finding about this query.
+C18|156.0|168.6|Earlier investigations stay on the page. The customer address table took two steps, seventy-nine seconds. Each step is one call to the free Nemotron tier.
+C19|169.6|178.2|Here's its first step. Nemotron's idea is to cast all thirty-six numeric outputs to the exact types Databricks declares.
+C20|178.6|186.8|Zetaris ran it, and the rows still differ, so the idea is rejected. The model proposed it, and the rows refused it.
+C21|187.6|193.8|That's the rule everywhere in Nirvana. Nothing counts until the rows match Databricks.
+C22|194.6|204.8|So query sixty-six stays on Databricks for now, and the rows that differ are its reason.
+C23|205.6|211.6|The overnight audit runs all of this as one job. Last night, forty-seven became a hundred.
+C24|212.6|226.2|I've started a new one. It runs every query, investigates what's blocked, re-checks, installs guard rules, and writes a morning report. Start it before bed, read it over coffee.
+C25|226.8|230.4|It takes about half an hour.
+C26|230.6|239.8|A finished investigation. H-MEM recalled two findings, so the agent went straight to the proof. Every padded zip code matches.
+C27|245.0|253.4|The tables page shows this run's alignment. Every table has the same row count on Databricks and on Zetaris.
+C28|254.4|261.8|The row diff is Zetaris reading Databricks over JDBC and its own sample on S3, in a single query.
+C29|262.6|274.6|A hundred and ninety rows exist only in Databricks. Three hundred thousand, one hundred and ninety exist only in the Zetaris sample, mostly one catalog page, repeated.
+C30|278.4|282.4|Next, guard rules for after the move.
+C31|283.2|288.4|That gap is why Nirvana measures a copy before trusting it.
+C32|289.2|299.4|Nirvana measures each column on Databricks and installs that shape as Zetaris data quality rules. I'm installing them for the customer address table.
+C33|300.2|313.8|The web site table's rules from earlier all hold. Now Zetaris runs every rule across all fifty thousand customer addresses.
+C34|314.4|322.0|The zip rule breaks on exactly the rows that lost their leading zero. Zetaris keeps enforcing it after every load.
+C35|323.6|325.9|What H-MEM remembers.
+C36|326.3|328.4|The query workload.
+C37|328.8|332.0|And every past run.
+C38|332.6|343.4|Back on the audit, the new run is still on its first step, running every query on both engines.
+C39|344.6|355.6|Everything here runs on this Mac. Docker holds the Zetaris platform, the data layer under every check.
+C40|356.6|363.8|And this is Meterless Nightshift, the AI provider. Every Nemotron call the agent made went through it.
+C41|364.6|375.0|That's Nirvana. The model picks what to check, and the rows decide what can leave Databricks.
