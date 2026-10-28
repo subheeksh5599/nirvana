@@ -718,7 +718,8 @@ async function paneAgent() {
   const pane = shell("agent", "Agent");
   let runs = [];
   try { runs = (await api("/runs")).filter((r) => r.status === "done" && r.mode === "live" && r.summary); } catch { /* shown below */ }
-  const csv = runs.find((r) => r.target.location === "NIRVANA_CSV" && r.summary.queries === 103) || runs[0];
+  const wanted = new URLSearchParams(location.search).get("run");
+  const csv = runs.find((r) => r.id === wanted) || runs[0];
   pane.innerHTML = `
     <div class="panel"><div class="panel-head"><div><h2>Investigate what the checks could not settle</h2><div class="sub">Nemotron, through Meterless Nightshift, picks each next check; Zetaris and Databricks run it; only rows prove anything</div></div></div>
       <div class="panel-body">
