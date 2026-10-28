@@ -329,6 +329,23 @@ async function paneOverview() {
       state.runs = null;
       navigate(`/app/run?run=${encodeURIComponent(r.id)}`);
     } catch (e) {
+      const busy = /run (run-[\w-]+) is still going/.exec(e.message);
+      if (busy) {
+        msg.className = "note";
+        msg.innerHTML = `Another check is still running. <a href="/app/run?run=${encodeURIComponent(busy[1])}" data-nav>Open it</a> or <a href="#" id="stop-busy">stop it</a>.`;
+        document.getElementById("stop-busy").addEventListener("click", async (ev) => {
+          ev.preventDefault();
+          msg.textContent = "Stopping…";
+          try { await api(`/runs/${busy[1]}/cancel`, { method: "POST" }); } catch { /* shown below */ }
+          for (let i = 0; i < 20; i++) {
+            const r = await api(`/runs/${busy[1]}`);
+            if (r.status !== "running") { msg.textContent = "Stopped. Press Start check again."; return; }
+            await new Promise((res) => setTimeout(res, 1500));
+          }
+          msg.textContent = "Still stopping, try again in a moment.";
+        });
+        return;
+      }
       msg.textContent = e.message;
       msg.className = "error";
     }
