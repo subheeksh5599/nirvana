@@ -347,6 +347,7 @@ def create_app(s: Settings | None = None, mode: str | None = None) -> FastAPI:
         first: dict[str, Any] = {}
 
         def emit(inv):
+            inv.run_id = req.run_id
             first.setdefault("id", inv.id)
             investigations.put(inv)
 
@@ -404,6 +405,10 @@ def create_app(s: Settings | None = None, mode: str | None = None) -> FastAPI:
             raise HTTPException(400, "target_location must be a plain database name")
         if any(a.get("status") == "running" for a in audits.all()):
             raise HTTPException(409, "an audit is still running")
+        with state.lock:
+            busy = [r for r in state.runs.values() if r.thread and r.thread.is_alive()]
+        if busy:
+            raise HTTPException(409, f"wait for run {busy[0].id} to finish first")
         if req.queries:
             try:
                 wl.select(req.queries)

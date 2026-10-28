@@ -90,6 +90,7 @@ class Investigation:
     summary: str = ""
     model: str = ""
     error: str | None = None
+    run_id: str = ""
     started_at: float = 0.0
     finished_at: float | None = None
 
