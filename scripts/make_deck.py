@@ -7,6 +7,7 @@ Then print docs/deck.html to PDF (1920x1080 pages)."""
 from __future__ import annotations
 
 import html
+import os
 import json
 import sys
 from datetime import datetime, timezone
@@ -36,6 +37,7 @@ db_counts = json.loads((Path.home() / "nirvana-data/databricks_counts.json").rea
 diff_tables = [(t, db_counts[t], sample_counts[t]) for t in sorted(db_counts) if db_counts[t] != sample_counts.get(t)]
 
 e = html.escape
+TESTS = f"{int(os.environ.get('NIRVANA_TESTS', '0')):,}"
 LABEL = {"move": "Same answer", "move_note": "Same, with a note", "rewrite": "Moves after a proven rewrite", "keep": "Stays on Databricks", "blocked": "Cannot be judged"}
 COLOR = {"move": "#0F7A46", "move_note": "#4C9A6E", "rewrite": "#145FE4", "keep": "#B02A22", "blocked": "#B9B9B0"}
 
@@ -47,6 +49,8 @@ def bar():
 
 
 def ms(x):
+    if x >= 600_000:
+        return f"{x / 60000:.0f} min"
     return f"{x / 1000:.0f} s" if x >= 1000 else f"{x:.0f} ms"
 
 
@@ -58,6 +62,30 @@ noted = [j for j in js if j["verdict"] in ("move_note", "rewrite", "keep", "bloc
 rows_noted = "".join(
     f"<tr><td class=m>{e(j['query_id'])}</td><td><span class=tag style='color:{COLOR[j['verdict']]}'>{LABEL[j['verdict']]}</span></td><td>{e(short_note(j['note'] or ''))}</td></tr>" for j in noted
 )
+def jsonl(name):
+    f = ROOT / "recordings" / name
+    out = {}
+    if f.exists():
+        for line in f.read_text().splitlines():
+            if line.strip():
+                x = json.loads(line)
+                out[x["id"]] = x
+    return sorted(out.values(), key=lambda x: x.get("started_at") or 0)
+
+
+invs = [i for i in jsonl("investigations.jsonl") if i["status"] == "done"]
+audits = [a for a in jsonl("audits.jsonl") if a["status"] == "done"]
+audit = audits[-1] if audits else None
+seen = set()
+rows_inv = ""
+for i in invs:
+    if i["kind"] != "table" or i["subject"] in seen:
+        continue
+    seen.add(i["subject"])
+    proved = "; ".join(f"{f['column']}: {'repaired by ' + f['expression'] if f['kind'] == 'repair' else 'unchanged, type only'}" for f in i["findings"])
+    rows_inv += (f"<tr><td class=m>{e(i['subject'])}</td><td class=n>{len(i['steps'])}</td><td class=n>{round(i['finished_at'] - i['started_at'])} s</td>"
+                 f"<td class=n>{len(i['recalled'])}</td><td>{e(proved)}</td></tr>")
+q_open = [i for i in invs if i["kind"] == "query" and not i["cleared"]]
 rows_diff = "".join(f"<tr><td class=m>{e(t)}</td><td class=n>{a:,}</td><td class=n>{b:,}</td><td class=n>{b - a:+,}</td></tr>" for t, a, b in diff_tables)
 
 slides = [
@@ -79,7 +107,7 @@ slides = [
     </div>""",
     """<div class=eye>The guarantee</div><h2>No verdict comes from a model.</h2>
     <div class=cols2>
-      <div><p class=big2>A model may only propose SQL. The judge runs the proposal on Zetaris and keeps it only if its rows equal Databricks' rows.</p>
+      <div><p class=big2>A model may only propose: the next check, a repair, a rewrite. The engines run it, and Nirvana keeps it only if the rows equal Databricks' rows.</p>
       <p class=lead2>A proposal with the right shape and the wrong rows is refused (test_wrong_advisor_rewrite_is_refused). An offline model ends a query in "keep", never in a guess.</p></div>
       <table class=t><tr><th>Verdict</th><th>Meaning</th></tr>
       <tr><td style='color:#0F7A46'><b>move</b></td><td>same answer on both engines</td></tr>
@@ -112,15 +140,29 @@ slides = [
       <div class=card><b>1,351 rows, found in one query</b><p>Zetaris read customer_address from Databricks itself (its bundled Databricks JDBC driver) and from the CSV copy at once. Every differing row is a ZIP code that lost its leading zero: 09082 became 9082.</p></div>
       <div class=card><b>Enforced by Zetaris</b><p>Nirvana measured each column on Databricks and installed it as Zetaris data-quality rules on the migrated table. The ZIP rule breaks on the same 1,351 rows, and keeps checking after every later load.</p></div>
     </div>""",
+    f"""<div class=eye>The agent</div><h2>Nemotron picks the next check. The rows decide.</h2>
+    <div class=cols2>
+      <table class=t><tr><th>Blocked table</th><th class=n>Steps</th><th class=n>Time</th><th class=n>Recalled</th><th>Proven on every row</th></tr>{rows_inv}</table>
+      <div><p class=big2>Each step, Nemotron (through Nightshift) chooses one tool: profile a column, compare it row by row in one federated Zetaris query, verify a repair, install a guard, or try a rewrite.</p>
+      <p class=lead2>A column is cleared only by 0 differing rows; a repair only by 0 mismatches across the whole table. Findings go to H-MEM and are recalled before the next case's first step.{' ' + str(len(q_open)) + ' query investigation(s) found no fix that matched the rows, so those queries stay on Databricks.' if q_open else ''}</p></div>
+    </div>""",
+    *([f"""<div class=eye>The overnight audit · {e(datetime.fromtimestamp(audit['started_at'], timezone.utc).strftime('%d %b %Y, %H:%M UTC'))}</div><h2><span class=num>{audit['report']['movable_before']}</span> → <span class=num>{audit['report']['movable_after']}</span> of {audit['report']['queries']} queries can move, unattended.</h2>
+    <div class=stats>
+      <div class=stat><div class=k>Unblocked by the agent</div><div class=v>{audit['report']['unblocked_by_agent']}</div></div>
+      <div class=stat><div class=k>Blocked tables cleared</div><div class=v>{audit['report']['tables_cleared']}/{audit['report']['tables_blocked']}</div></div>
+      <div class=stat><div class=k>Guard rules installed</div><div class=v>{len(audit['report']['guards'])}</div></div>
+      <div class=stat><div class=k>Took</div><div class=v>{ms((audit['finished_at'] - audit['started_at']) * 1000)}</div></div>
+    </div>
+    <p class=lead2>One job: run all {audit['report']['queries']} queries, investigate everything blocked or kept, re-judge with what was proven, install Zetaris guard rules for every repair, write the morning report. {audit['report']['queries'] - audit['report']['movable_after']} queries stay on Databricks, each with its reason; the agent could not fix {e(', '.join(x for x in audit['report']['still_open'] if x.startswith('q')) or 'none')}.</p>"""] if audit else []),
     """<div class=eye>Sponsor technology, load-bearing</div><h2>Remove any one and a step stops.</h2>
     <div class=cols3>
       <div class=card><b>Zetaris · the data layer</b><p>The 24 parquet files are Lightning filestore tables, read in place. Every query, table profile and rewrite runs through the REST SQL endpoint. It reads Databricks over JDBC in the same query as its own tables, and enforces the source's measured shape as DQ rules.</p></div>
       <div class=card><b>Meterless · H-MEM and Nightshift</b><p>H-MEM stores each proven fix and each order-tie proof with its query features. Matching queries try recalled fixes first and skip re-runs already settled; a fix that fails loses confidence. Nightshift is the only AI provider, on 127.0.0.1:8088, under the 0.90 provider contract.</p></div>
-      <div class=card><b>NVIDIA Nemotron</b><p>Nightshift relays rewrite proposals to a free Nemotron for differences no rule explains. No local model runs. The judge decides on the rows.</p></div>
+      <div class=card><b>NVIDIA Nemotron</b><p>Nightshift relays every agent step to a free Nemotron, which picks the next check and proposes repairs and rewrites. No local model runs. The engines decide on the rows.</p></div>
     </div>""",
-    """<div class=eye>Engineering</div><h2>Built to be checked.</h2>
+    f"""<div class=eye>Engineering</div><h2>Built to be checked.</h2>
     <div class=cols3>
-      <div class=card><b>1,288 tests</b><p>Real SQL on DuckDB, the real H-MEM engine, every TPC-DS query parsed and qualified, tampered tables caught, property tests on the canonicaliser.</p></div>
+      <div class=card><b>{TESTS} tests</b><p>Real SQL on DuckDB, the real H-MEM engine, every TPC-DS query parsed and qualified, tampered tables caught, property tests on the canonicaliser.</p></div>
       <div class=card><b>Receipts</b><p>Each run gets a SHA-256 over query hashes, both fingerprints, verdicts and rewrites. Importing an edited recording is refused.</p></div>
       <div class=card><b>A dashboard, not a slide</b><p>Start a run, watch 24 tables and 103 queries fill in live, open any query to its rows, fingerprints, rewrite and every execution step.</p></div>
     </div>""",

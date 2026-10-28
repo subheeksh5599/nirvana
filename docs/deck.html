@@ -46,7 +46,7 @@ table.t td{padding:13px 18px;border-bottom:1px solid #E8E8E3;vertical-align:top}
       <div class=card><span class=n1>04</span><b>Prove the cause</b><p>Rewrites run on Zetaris until one returns the source's exact rows. Otherwise the query stays on Databricks.</p></div>
     </div></section><section><div class=eye>The guarantee</div><h2>No verdict comes from a model.</h2>
     <div class=cols2>
-      <div><p class=big2>A model may only propose SQL. The judge runs the proposal on Zetaris and keeps it only if its rows equal Databricks' rows.</p>
+      <div><p class=big2>A model may only propose: the next check, a repair, a rewrite. The engines run it, and Nirvana keeps it only if the rows equal Databricks' rows.</p>
       <p class=lead2>A proposal with the right shape and the wrong rows is refused (test_wrong_advisor_rewrite_is_refused). An offline model ends a query in "keep", never in a guess.</p></div>
       <table class=t><tr><th>Verdict</th><th>Meaning</th></tr>
       <tr><td style='color:#0F7A46'><b>move</b></td><td>same answer on both engines</td></tr>
@@ -73,14 +73,26 @@ table.t td{padding:13px 18px;border-bottom:1px solid #E8E8E3;vertical-align:top}
       <div class=card><b>3 rewrites proven</b><p>Loading the same tables from CSV with inferred types turned DECIMAL into DOUBLE. q7, q26 and q28 returned different averages; casting the columns back on Zetaris reproduced Databricks' exact rows.</p></div>
       <div class=card><b>1,351 rows, found in one query</b><p>Zetaris read customer_address from Databricks itself (its bundled Databricks JDBC driver) and from the CSV copy at once. Every differing row is a ZIP code that lost its leading zero: 09082 became 9082.</p></div>
       <div class=card><b>Enforced by Zetaris</b><p>Nirvana measured each column on Databricks and installed it as Zetaris data-quality rules on the migrated table. The ZIP rule breaks on the same 1,351 rows, and keeps checking after every later load.</p></div>
-    </div></section><section><div class=eye>Sponsor technology, load-bearing</div><h2>Remove any one and a step stops.</h2>
+    </div></section><section><div class=eye>The agent</div><h2>Nemotron picks the next check. The rows decide.</h2>
+    <div class=cols2>
+      <table class=t><tr><th>Blocked table</th><th class=n>Steps</th><th class=n>Time</th><th class=n>Recalled</th><th>Proven on every row</th></tr><tr><td class=m>customer_address</td><td class=n>4</td><td class=n>104 s</td><td class=n>0</td><td>ca_street_number: unchanged, type only; ca_zip: repaired by lpad(cast(x as string), 5, &#x27;0&#x27;)</td></tr><tr><td class=m>store</td><td class=n>2</td><td class=n>35 s</td><td class=n>2</td><td>s_street_number: unchanged, type only</td></tr><tr><td class=m>web_site</td><td class=n>2</td><td class=n>70 s</td><td class=n>3</td><td>web_street_number: unchanged, type only</td></tr></table>
+      <div><p class=big2>Each step, Nemotron (through Nightshift) chooses one tool: profile a column, compare it row by row in one federated Zetaris query, verify a repair, install a guard, or try a rewrite.</p>
+      <p class=lead2>A column is cleared only by 0 differing rows; a repair only by 0 mismatches across the whole table. Findings go to H-MEM and are recalled before the next case's first step. 2 query investigation(s) found no fix that matched the rows, so those queries stay on Databricks.</p></div>
+    </div></section><section><div class=eye>The overnight audit · 27 Oct 2026, 23:52 UTC</div><h2><span class=num>47</span> → <span class=num>100</span> of 103 queries can move, unattended.</h2>
+    <div class=stats>
+      <div class=stat><div class=k>Unblocked by the agent</div><div class=v>53</div></div>
+      <div class=stat><div class=k>Blocked tables cleared</div><div class=v>3/3</div></div>
+      <div class=stat><div class=k>Guard rules installed</div><div class=v>2</div></div>
+      <div class=stat><div class=k>Took</div><div class=v>33 min</div></div>
+    </div>
+    <p class=lead2>One job: run all 103 queries, investigate everything blocked or kept, re-judge with what was proven, install Zetaris guard rules for every repair, write the morning report. 3 queries stay on Databricks, each with its reason; the agent could not fix q66.</p></section><section><div class=eye>Sponsor technology, load-bearing</div><h2>Remove any one and a step stops.</h2>
     <div class=cols3>
       <div class=card><b>Zetaris · the data layer</b><p>The 24 parquet files are Lightning filestore tables, read in place. Every query, table profile and rewrite runs through the REST SQL endpoint. It reads Databricks over JDBC in the same query as its own tables, and enforces the source's measured shape as DQ rules.</p></div>
       <div class=card><b>Meterless · H-MEM and Nightshift</b><p>H-MEM stores each proven fix and each order-tie proof with its query features. Matching queries try recalled fixes first and skip re-runs already settled; a fix that fails loses confidence. Nightshift is the only AI provider, on 127.0.0.1:8088, under the 0.90 provider contract.</p></div>
-      <div class=card><b>NVIDIA Nemotron</b><p>Nightshift relays rewrite proposals to a free Nemotron for differences no rule explains. No local model runs. The judge decides on the rows.</p></div>
+      <div class=card><b>NVIDIA Nemotron</b><p>Nightshift relays every agent step to a free Nemotron, which picks the next check and proposes repairs and rewrites. No local model runs. The engines decide on the rows.</p></div>
     </div></section><section><div class=eye>Engineering</div><h2>Built to be checked.</h2>
     <div class=cols3>
-      <div class=card><b>1,288 tests</b><p>Real SQL on DuckDB, the real H-MEM engine, every TPC-DS query parsed and qualified, tampered tables caught, property tests on the canonicaliser.</p></div>
+      <div class=card><b>1,343 tests</b><p>Real SQL on DuckDB, the real H-MEM engine, every TPC-DS query parsed and qualified, tampered tables caught, property tests on the canonicaliser.</p></div>
       <div class=card><b>Receipts</b><p>Each run gets a SHA-256 over query hashes, both fingerprints, verdicts and rewrites. Importing an edited recording is refused.</p></div>
       <div class=card><b>A dashboard, not a slide</b><p>Start a run, watch 24 tables and 103 queries fill in live, open any query to its rows, fingerprints, rewrite and every execution step.</p></div>
     </div></section><section><div class=eye>Honesty</div><h2>What this is, and what it is not.</h2>
