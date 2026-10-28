@@ -12,6 +12,7 @@
 [![run it](https://img.shields.io/badge/run%20it-one%20command-black)](#-see-it-in-one-command)
 [![verify](https://img.shields.io/badge/verify-every%20claim-black)](#verify-every-claim-in-one-command)
 [![honesty](https://img.shields.io/badge/honesty-table-black)](#whats-real-vs-pending--the-honesty-table)
+[![demo](https://img.shields.io/badge/demo-watch%20on%20YouTube-red)](https://youtu.be/qT8zSDXd5J4)
 
 </div>
 
@@ -23,6 +24,12 @@ same input tables  ->  same query  ->  different rows   -> a rewrite that return
                                                          -> nothing proven                          = keep
 different input tables                                                                             = blocked
 ```
+
+## ▶ Demo video
+
+[![Nirvana demo video](docs/media/demo-poster.jpg)](https://youtu.be/qT8zSDXd5J4)
+
+**[Watch the 8-minute demo on YouTube](https://youtu.be/qT8zSDXd5J4).** A 2-minute animated intro explains the problem and how Nirvana works. Then a live run of five queries: query 7 moves with the same fingerprint on both engines, and the agent re-checks query 66 live, where the rows refuse its fix. After that, the overnight audit, Zetaris row diff, guard rules on the customer address table, and the services running on the Mac. The intro and narration sources are in [`demo/`](demo/), with every line and its time in [`demo/NARRATION.md`](demo/NARRATION.md).
 
 ## Live status
 
@@ -91,6 +98,7 @@ SpaceXAI's coding agents were withdrawn from the event by the organisers, so the
 
 ## Table of contents
 
+- [Demo video](#-demo-video)
 - [Live status](#live-status)
 - [The 20-second pitch](#the-20-second-pitch)
 - [How we used every sponsor, in plain words](#how-we-used-every-sponsor-in-plain-words)
