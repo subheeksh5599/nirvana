@@ -1,0 +1,1 @@
+But here's the scary part. A migrated query rarely crashes. It runs fine, and quietly gives a different answer.

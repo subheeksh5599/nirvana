@@ -1,0 +1,69 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; background: #ffffff; font-family: "Inter", sans-serif; color: #131311; }
+    #bill-card { position: absolute; left: 160px; top: 150px; width: 980px; height: 780px; background: #fafaf8; border: 2px solid #e8e8e3; border-radius: 22px; padding: 56px 64px; }
+    .bill-eyebrow { font-size: 28px; color: #74746c; }
+    .bill-title { font-size: 64px; font-weight: 700; letter-spacing: -0.03em; margin-top: 10px; }
+    .bill-row { display: flex; align-items: baseline; justify-content: space-between; border-top: 2px solid #e8e8e3; margin-top: 44px; padding-top: 34px; font-size: 38px; }
+    .bill-row .k { color: #56564e; }
+    #bill-hl { position: absolute; left: 30px; right: 30px; top: 238px; height: 88px; border-radius: 12px; background: #e9f0fd; transform-origin: left center; }
+    .tier { position: relative; display: inline-flex; gap: 22px; align-items: baseline; font-weight: 700; }
+    #bill-std { position: relative; }
+    #bill-strike { position: absolute; left: -4px; right: -4px; top: 52%; height: 5px; background: #b02a22; transform-origin: left center; }
+    #bill-prem { color: #131311; }
+    .bars { margin-top: 54px; }
+    .bar-label { font-size: 28px; color: #56564e; margin-bottom: 12px; }
+    .bar { height: 54px; border-radius: 10px; transform-origin: left center; }
+    #bill-bar-a { width: 560px; background: #d8d8d1; }
+    #bill-bar-b { width: 756px; background: #b02a22; margin-top: 30px; }
+    #bill-plus { position: absolute; left: 836px; top: 0; font-size: 44px; font-weight: 700; color: #b02a22; white-space: nowrap; }
+    .bar-wrap { position: relative; }
+    #bill-dest { position: absolute; left: 1290px; top: 300px; width: 470px; height: 470px; border: 3px solid #131311; border-radius: 26px; background: #ffffff; padding: 40px; }
+    .dest-eyebrow { font-size: 28px; color: #74746c; }
+    .dest-name { font-size: 72px; font-weight: 700; letter-spacing: -0.03em; margin-top: 8px; }
+    .dest-sub { font-size: 28px; color: #56564e; margin-top: 12px; line-height: 1.35; }
+    .chip { position: absolute; font-family: "JetBrains Mono", monospace; font-size: 30px; padding: 12px 20px; border-radius: 10px; background: #131311; color: #ffffff; }
+  </style>
+  <div id="root" data-composition-id="bill" data-width="1920" data-height="1080">
+    <div id="bill-card">
+      <div id="bill-hl"></div>
+      <div class="bill-eyebrow" style="position: relative">Azure Databricks · workspace plan</div>
+      <div class="bill-title" style="position: relative">Your next bill</div>
+      <div class="bill-row" style="position: relative"><span class="k">Tier</span><span class="tier"><span id="bill-std">Standard<span id="bill-strike"></span></span><span id="bill-prem">Premium</span></span></div>
+      <div class="bars" style="position: relative">
+        <div class="bar-label">Before</div>
+        <div id="bill-bar-a" class="bar"></div>
+        <div class="bar-wrap"><div id="bill-bar-b" class="bar"></div><div id="bill-plus">+35% or more</div></div>
+        <div class="bar-label" style="margin-top: 12px">After the move to Premium</div>
+      </div>
+    </div>
+    <div id="bill-dest">
+      <div class="dest-eyebrow">Move the workload to</div>
+      <div class="dest-name">Zetaris</div>
+      <div class="dest-sub">Same tables, same queries,<br />a cheaper engine</div>
+    </div>
+    <div id="bill-q1" class="chip">q7</div>
+    <div id="bill-q2" class="chip">q45</div>
+    <div id="bill-q3" class="chip">q66</div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#bill-card", { opacity: 1 }, { opacity: 1, duration: 0.01 }, 0);
+    tl.fromTo("#bill-hl", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power2.out" }, 1.9);
+    tl.to("#bill-hl", { opacity: 0, duration: 0.4 }, 6.2);
+    tl.fromTo("#bill-prem", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.35, ease: "power3.out" }, 4.0);
+    tl.fromTo("#bill-std", { color: "#131311" }, { color: "#74746c", duration: 0.3 }, 3.85);
+    tl.fromTo("#bill-strike", { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: "power2.out" }, 3.85);
+    tl.fromTo("#bill-bar-a", { scaleX: 1 }, { scaleX: 1, duration: 0.01 }, 0);
+    tl.fromTo("#bill-bar-b", { scaleX: 0 }, { scaleX: 1, duration: 0.9, ease: "power2.out" }, 6.4);
+    tl.fromTo("#bill-plus", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 7.5);
+    tl.fromTo("#bill-dest", { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, 9.6);
+    const chips = [["#bill-q1", 820, 0, 1340], ["#bill-q2", 880, 0.18, 1460], ["#bill-q3", 940, 0.36, 1600]];
+    chips.forEach(([id, y, d, ex]) => {
+      tl.fromTo(id, { x: 1160, y: y, opacity: 0 }, { x: 1180, y: y, opacity: 1, duration: 0.3, ease: "power2.out" }, 10.1 + d);
+      tl.to(id, { x: ex, y: 660, duration: 1.1, ease: "power2.inOut" }, 10.6 + d);
+    });
+    tl.to("#bill-dest", { borderColor: "#145fe4", duration: 0.3 }, 11.9);
+    window.__timelines["bill"] = tl;
+  </script>
+</template>

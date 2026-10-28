@@ -1,0 +1,1 @@
+If the answers differ, it tries a fix on Zetaris. A fix is kept only when it returns Databricks' exact rows.

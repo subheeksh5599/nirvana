@@ -1,0 +1,1 @@
+Same table, same row. Databricks says zip code zero, nine, three, two, one. The copy on Zetaris says nine, three, two, one. The leading zero is gone.

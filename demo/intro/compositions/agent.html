@@ -1,0 +1,86 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; background: #ffffff; font-family: "Inter", sans-serif; color: #131311; }
+    #ag-card { position: absolute; left: 160px; top: 80px; width: 1080px; height: 920px; border: 2px solid #e8e8e3; border-radius: 22px; background: #ffffff; overflow: hidden; }
+    .ag-head { display: flex; justify-content: space-between; align-items: center; padding: 34px 44px; border-bottom: 2px solid #e8e8e3; background: #fafaf8; }
+    .ag-title { font-size: 42px; font-weight: 700; letter-spacing: -0.02em; }
+    .ag-title span { font-family: "JetBrains Mono", monospace; font-weight: 700; }
+    .ag-sub { font-size: 28px; color: #74746c; margin-top: 6px; }
+    .tagx { font-size: 28px; font-weight: 700; padding: 8px 18px; border-radius: 8px; position: absolute; right: 44px; top: 50px; }
+    .bad { color: #b02a22; background: #f8ebea; }
+    .good { color: #0f7a46; background: #e7f3ec; }
+    .ag-body { padding: 30px 44px; }
+    .earlier { font-size: 28px; color: #74746c; margin-bottom: 22px; }
+    .stp { display: flex; gap: 22px; margin-bottom: 30px; }
+    .dot { width: 18px; height: 18px; border-radius: 9px; margin-top: 12px; flex: none; }
+    .stp .h { font-size: 34px; font-weight: 700; }
+    .stp .h code { font-family: "JetBrains Mono", monospace; font-weight: 400; color: #74746c; font-size: 30px; margin-left: 10px; }
+    .res { font-size: 30px; margin-top: 10px; }
+    .mini { margin-top: 14px; border-collapse: collapse; font-family: "JetBrains Mono", monospace; font-size: 28px; }
+    .mini th { font-family: "Inter", sans-serif; font-size: 28px; color: #74746c; font-weight: 400; text-align: left; padding: 4px 28px 8px 0; }
+    .mini td { padding: 6px 28px 6px 0; }
+    .mini td.z { color: #b02a22; }
+    .expr { display: inline-block; font-family: "JetBrains Mono", monospace; font-size: 30px; border: 2px solid #145fe4; border-radius: 10px; padding: 8px 16px; margin-top: 12px; }
+    #ag-route { position: absolute; left: 1320px; top: 150px; width: 440px; }
+    .rbox { border: 2px solid #131311; border-radius: 16px; padding: 22px 26px; }
+    .rbox .k { font-size: 28px; color: #74746c; }
+    .rbox .v { font-size: 38px; font-weight: 700; letter-spacing: -0.02em; margin-top: 4px; }
+    #ag-arrow { width: 2px; height: 60px; background: #131311; margin: 0 0 0 40px; transform-origin: top center; }
+    .rnote { font-size: 28px; color: #56564e; margin-top: 18px; line-height: 1.4; }
+    #ag-say { position: absolute; left: 1320px; top: 610px; width: 440px; }
+    .say { font-size: 46px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.12; }
+    #ag-say2 { margin-top: 34px; color: #0f7a46; }
+  </style>
+  <div id="root" data-composition-id="agent" data-width="1920" data-height="1080">
+    <div id="ag-card">
+      <div class="ag-head"><div><div class="ag-title">Table <span>customer_address</span></div><div class="ag-sub">blocked: the table differs between the engines</div></div></div>
+      <div id="ag-blocked" class="tagx bad">Blocked</div>
+      <div id="ag-proven" class="tagx good">Proven</div>
+      <div class="ag-body">
+        <div id="ag-earlier" class="earlier">2 earlier checks: the street number only changed type</div>
+        <div id="ag-s1" class="stp"><div id="ag-d1" class="dot" style="background: #b02a22"></div><div>
+          <div class="h">Compare a column across engines<code>ca_zip</code></div>
+          <div id="ag-r1" class="res"><b style="color: #b02a22">1,351</b> of 50,000 rows differ</div>
+          <table id="ag-mini" class="mini"><tr><th>Databricks</th><th>Zetaris</th></tr><tr><td>09321</td><td class="z">9321</td></tr><tr><td>06792</td><td class="z">6792</td></tr><tr><td>00791</td><td class="z">791</td></tr></table>
+        </div></div>
+        <div id="ag-s2" class="stp"><div id="ag-d2" class="dot" style="background: #0f7a46"></div><div>
+          <div class="h">Verify a repair<code>ca_zip</code></div>
+          <div id="ag-expr" class="expr">lpad(cast(x as string), 5, '0')</div>
+          <div id="ag-run" class="res" style="color: #56564e; position: absolute; margin-top: 14px">Zetaris is checking every row<div style="margin-top: 10px; width: 520px; height: 10px; border-radius: 5px; background: #f1f1ed"><div id="ag-bar" style="width: 520px; height: 10px; border-radius: 5px; background: #145fe4; transform-origin: left center"></div></div></div><div id="ag-r2" class="res" style="color: #0f7a46; font-weight: 700">✓ All 50,000 rows match</div>
+        </div></div>
+      </div>
+    </div>
+    <div id="ag-route">
+      <div id="ag-nv" class="rbox"><div class="k">picks each check</div><div class="v">NVIDIA Nemotron</div></div>
+      <div id="ag-arrow"></div>
+      <div id="ag-ns" class="rbox"><div class="k">the AI provider</div><div class="v">Meterless Nightshift</div></div>
+      <div id="ag-rnote" class="rnote">Zetaris and Databricks run every check it picks.</div>
+    </div>
+    <div id="ag-say" data-hold><div id="ag-say1" class="say">The model picks what to check.</div><div id="ag-say2" class="say">The rows decide what's true.</div></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#ag-card", { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: 0.55, ease: "power3.out" }, 0.1);
+    tl.fromTo("#ag-blocked", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 1.8);
+    tl.fromTo("#ag-nv", { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 5.0);
+    tl.fromTo("#ag-arrow", { scaleY: 0 }, { scaleY: 1, duration: 0.4, ease: "power2.out" }, 6.6);
+    tl.fromTo("#ag-ns", { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 7.0);
+    tl.fromTo("#ag-earlier", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 8.4);
+    tl.fromTo("#ag-s1", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 8.6);
+    tl.fromTo("#ag-rnote", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 10.45);
+    tl.fromTo("#ag-r1", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.3, ease: "power2.out" }, 12.1);
+    tl.fromTo("#ag-mini tr", { opacity: 0 }, { opacity: 1, duration: 0.2, stagger: 0.25 }, 13.0);
+    tl.fromTo("#ag-s2", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 16.2);
+    tl.fromTo("#ag-expr", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.7, ease: "power2.out" }, 16.8);
+    tl.fromTo("#ag-run", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 17.6);
+    tl.fromTo("#ag-bar", { scaleX: 0 }, { scaleX: 1, duration: 3.1, ease: "power1.inOut" }, 17.7);
+    tl.to("#ag-run", { opacity: 0, duration: 0.2 }, 20.85);
+    tl.fromTo("#ag-r2", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)", transformOrigin: "left center" }, 20.95);
+    tl.to("#ag-blocked", { opacity: 0, duration: 0.2 }, 21.6);
+    tl.fromTo("#ag-proven", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 21.7);
+    tl.to("#ag-route", { opacity: 0.25, duration: 0.4 }, 22.7);
+    tl.fromTo("#ag-say1", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 23.0);
+    tl.fromTo("#ag-say2", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 25.25);
+    window.__timelines["agent"] = tl;
+  </script>
+</template>

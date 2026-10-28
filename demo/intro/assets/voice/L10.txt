@@ -1,0 +1,1 @@
+Zetaris runs it. Here, 1,351 zip codes differ. The agent proposes padding them back to five digits, and Zetaris confirms it. Zero rows differ.

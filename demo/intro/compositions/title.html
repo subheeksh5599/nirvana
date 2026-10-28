@@ -1,0 +1,37 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; background: #ffffff; font-family: "Inter", sans-serif; color: #131311; }
+    #title-lock { position: absolute; left: 160px; top: 210px; display: flex; align-items: center; gap: 40px; }
+    #title-mark { width: 132px; height: 132px; border-radius: 30px; background: #131311; position: relative; }
+    #title-mark-in { position: absolute; left: 34px; top: 34px; width: 64px; height: 64px; border-radius: 12px; background: #ffffff; }
+    #title-name { font-size: 168px; font-weight: 700; letter-spacing: -0.045em; line-height: 1; }
+    #title-line { position: absolute; left: 164px; top: 400px; font-size: 52px; font-weight: 400; color: #56564e; letter-spacing: -0.015em; white-space: nowrap; }
+    #title-line b { color: #131311; font-weight: 700; }
+    #title-grid { position: absolute; left: 164px; top: 560px; width: 1592px; display: grid; grid-template-columns: repeat(26, 1fr); gap: 10px; }
+    .cell { height: 56px; border-radius: 8px; background: #f1f1ed; }
+    #title-cap { position: absolute; left: 164px; top: 856px; font-family: "JetBrains Mono", monospace; font-size: 28px; color: #74746c; }
+  </style>
+  <div id="root" data-composition-id="title" data-width="1920" data-height="1080">
+    <div id="title-lock"><div id="title-mark"><div id="title-mark-in"></div></div><div id="title-name">Nirvana</div></div>
+    <div id="title-line">Proves which queries can leave <b>Databricks</b>, before they do.</div>
+    <div id="title-grid"></div>
+    <div id="title-cap">103 TPC-DS queries, each checked on both engines</div>
+  </div>
+  <script>
+    const grid = document.querySelector('[data-composition-id="title"] #title-grid') || document.getElementById("title-grid");
+    for (let i = 0; i < 103; i++) {
+      const c = document.createElement("div");
+      c.className = "cell";
+      c.id = "title-c" + i;
+      grid.appendChild(c);
+    }
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#title-mark", { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.8)" }, 0.45);
+    tl.fromTo("#title-name", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" }, 0.55);
+    tl.fromTo("#title-line", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 1.2, ease: "power2.inOut" }, 1.6);
+    tl.fromTo("#title-grid .cell", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.25, ease: "power2.out", stagger: 0.006 }, 3.15);
+    tl.to("#title-grid .cell", { backgroundColor: "#131311", duration: 0.12, stagger: { each: 0.02, from: "start" } }, 4.6);
+    tl.fromTo("#title-cap", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 4.2);
+    window.__timelines["title"] = tl;
+  </script>
+</template>

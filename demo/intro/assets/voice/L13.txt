@@ -1,0 +1,1 @@
+Left to run overnight on a CSV migration, forty-seven of a hundred and three queries were provably safe at first. By morning, a hundred.

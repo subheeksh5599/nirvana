@@ -1,0 +1,1 @@
+Azure Databricks is moving Standard workspaces to Premium. For many teams, that's thirty-five percent more, or higher.

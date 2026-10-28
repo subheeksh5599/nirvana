@@ -1,0 +1,1 @@
+Every proof is saved in Meterless H-MEM, so the agent remembers. The next time, the same table took two steps instead of four.

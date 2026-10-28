@@ -1,0 +1,43 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; background: #ffffff; font-family: "Inter", sans-serif; color: #131311; }
+    #mem-box { position: absolute; left: 160px; top: 200px; width: 760px; height: 640px; border: 2px solid #131311; border-radius: 22px; padding: 44px; }
+    .mk { font-size: 28px; color: #74746c; }
+    .mv { font-size: 56px; font-weight: 700; letter-spacing: -0.03em; margin-top: 6px; }
+    #mem-note { position: absolute; left: 44px; top: 220px; width: 672px; border: 2px solid #e8e8e3; background: #e9f0fd; border-radius: 14px; padding: 26px 28px; }
+    .nk { font-family: "JetBrains Mono", monospace; font-size: 28px; color: #145fe4; }
+    .nv { font-size: 30px; line-height: 1.4; margin-top: 10px; }
+    .nv code { font-family: "JetBrains Mono", monospace; font-size: 28px; }
+    #mem-cmp { position: absolute; left: 1020px; top: 250px; width: 740px; }
+    .crow { padding: 30px 0; border-bottom: 2px solid #e8e8e3; }
+    .ch { font-size: 30px; color: #56564e; }
+    .cn { display: flex; align-items: center; gap: 22px; margin-top: 14px; }
+    .cbig { font-size: 64px; font-weight: 700; letter-spacing: -0.03em; width: 260px; }
+    .dots { display: flex; gap: 16px; }
+    .sd { width: 40px; height: 40px; border-radius: 20px; background: #131311; }
+    #mem-r2 .sd { background: #145fe4; }
+  </style>
+  <div id="root" data-composition-id="memory" data-width="1920" data-height="1080">
+    <div id="mem-box">
+      <div class="mk">memory engine</div>
+      <div class="mv">Meterless H-MEM</div>
+      <div id="mem-note"><div class="nk">proven · customer_address.ca_zip</div><div class="nv"><code>lpad(cast(x as string), 5, '0')</code> reproduces every Databricks value</div></div>
+      <div id="mem-keep" style="position: absolute; left: 44px; top: 480px; font-size: 30px; font-weight: 700; color: #145fe4">↳ recalled before the next investigation starts</div>
+    </div>
+    <div id="mem-cmp">
+      <div id="mem-r1" class="crow"><div class="ch">First investigation</div><div class="cn"><div class="cbig">4 steps</div><div class="dots"><div class="sd"></div><div class="sd"></div><div class="sd"></div><div class="sd"></div></div></div></div>
+      <div id="mem-r2" class="crow"><div class="ch">Next time, with memory</div><div class="cn"><div class="cbig">2 steps</div><div class="dots"><div class="sd"></div><div class="sd"></div></div></div></div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#mem-box", { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, 0.1);
+    tl.fromTo("#mem-note", { opacity: 0, y: -60 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 1.3);
+    tl.fromTo("#mem-keep", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 3.9);
+    tl.fromTo("#mem-r1", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 5.55);
+    tl.fromTo("#mem-r1 .sd", { scale: 0 }, { scale: 1, duration: 0.25, ease: "back.out(2)", stagger: 0.08 }, 5.8);
+    tl.fromTo("#mem-r2", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 7.35);
+    tl.fromTo("#mem-r2 .sd", { scale: 0 }, { scale: 1, duration: 0.25, ease: "back.out(2)", stagger: 0.08 }, 7.6);
+    window.__timelines["memory"] = tl;
+  </script>
+</template>

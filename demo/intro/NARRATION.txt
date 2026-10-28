@@ -1,0 +1,16 @@
+id|scene|text
+L01|bill|Azure Databricks is moving Standard workspaces to Premium. For many teams, that's thirty-five percent more, or higher.
+L02|bill|So they want to move their queries somewhere cheaper, like Zetaris.
+L03|zip|But here's the scary part. A migrated query rarely crashes. It runs fine, and quietly gives a different answer.
+L04|zip|Same table, same row. Databricks says zip code zero, nine, three, two, one. The copy on Zetaris says nine, three, two, one. The leading zero is gone.
+L05|title|Nirvana catches this before you move. Query by query, it proves which ones are safe to leave Databricks.
+L06|how|First, it measures every table on both engines. If the data itself differs, those queries are blocked, not guessed.
+L07|how|Then it runs each query on Databricks and on Zetaris, and compares every row. Each answer gets a fingerprint.
+L08|how|If the answers differ, it tries a fix on Zetaris. A fix is kept only when it returns Databricks' exact rows.
+L09|agent|When something still doesn't match, an AI agent takes over. NVIDIA Nemotron, running through Meterless Nightshift, picks the next check.
+L10|agent|Zetaris runs it. Here, 1,351 zip codes differ. The agent proposes padding them back to five digits, and Zetaris confirms it. Zero rows differ.
+L11|agent|The AI chooses what to look at. It never decides what's true. The rows do.
+L12|memory|Every proof is saved in Meterless H-MEM, so the agent remembers. The next time, the same table took two steps instead of four.
+L13|payoff|Left to run overnight on a CSV migration, forty-seven of a hundred and three queries were provably safe at first. By morning, a hundred.
+L14|payoff|The last three stay on Databricks, each with its reason.
+L15|handoff|Now let's watch it run, live.

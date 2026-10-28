@@ -1,0 +1,1 @@
+Nirvana catches this before you move. Query by query, it proves which ones are safe to leave Databricks.

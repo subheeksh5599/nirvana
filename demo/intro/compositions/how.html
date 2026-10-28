@@ -1,0 +1,88 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; background: #ffffff; font-family: "Inter", sans-serif; color: #131311; }
+    .colhead { position: absolute; top: 80px; font-size: 40px; font-weight: 700; letter-spacing: -0.02em; }
+    #how-hd { left: 640px; }
+    #how-hz { left: 1240px; }
+    .rule { position: absolute; left: 160px; width: 1600px; height: 2px; background: #e8e8e3; transform-origin: left center; }
+    .step { position: absolute; left: 160px; width: 420px; }
+    .step .n { font-family: "JetBrains Mono", monospace; font-size: 28px; color: #74746c; }
+    .step .t { font-size: 40px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.12; margin-top: 6px; }
+    .tag { display: inline-block; margin-top: 16px; font-size: 28px; font-weight: 700; padding: 8px 16px; border-radius: 8px; }
+    .bad { color: #b02a22; background: #f8ebea; }
+    .good { color: #0f7a46; background: #e7f3ec; }
+    .col { position: absolute; width: 540px; }
+    .trow { display: flex; justify-content: space-between; font-family: "JetBrains Mono", monospace; font-size: 28px; padding: 12px 16px; border-radius: 8px; }
+    .trow .v { color: #56564e; }
+    .cellbox { font-family: "JetBrains Mono", monospace; font-size: 30px; padding: 16px 20px; border: 2px solid #e8e8e3; border-radius: 12px; background: #fafaf8; white-space: nowrap; }
+    .sub { font-family: "Inter", sans-serif; font-size: 28px; color: #74746c; margin-bottom: 6px; }
+    .eq { position: absolute; font-size: 44px; font-weight: 700; color: #0f7a46; }
+  </style>
+  <div id="root" data-composition-id="how" data-width="1920" data-height="1080">
+    <div id="how-hd" class="colhead">Databricks</div>
+    <div id="how-hz" class="colhead">Zetaris</div>
+
+    <div id="how-r1" class="rule" style="top: 160px"></div>
+    <div id="how-s1" class="step" style="top: 190px"><div class="n">first</div><div class="t">Measure every table</div><div id="how-blk" class="tag bad">30 queries blocked</div></div>
+    <div id="how-t1a" class="col" style="left: 620px; top: 190px">
+      <div class="trow"><span>store_sales</span><span class="v">2,880,404</span></div>
+      <div class="trow"><span>item</span><span class="v">18,000</span></div>
+      <div id="how-ca-a" class="trow"><span>customer_address</span><span class="v">50,000</span></div>
+    </div>
+    <div id="how-t1b" class="col" style="left: 1220px; top: 190px">
+      <div class="trow"><span>store_sales</span><span class="v">2,880,404</span></div>
+      <div class="trow"><span>item</span><span class="v">18,000</span></div>
+      <div id="how-ca-b" class="trow"><span>customer_address</span><span class="v">differs</span></div>
+    </div>
+
+    <div id="how-r2" class="rule" style="top: 440px"></div>
+    <div id="how-s2" class="step" style="top: 470px"><div class="n">then</div><div class="t">Run on both,<br />compare every row</div></div>
+    <div id="how-q2a" class="col" style="left: 620px; top: 470px"><div class="sub">q7 · 100 rows · fingerprint</div><div class="cellbox">92be4ffc0fcf</div></div>
+    <div id="how-q2b" class="col" style="left: 1220px; top: 470px"><div class="sub">q7 · 100 rows · fingerprint</div><div class="cellbox">92be4ffc0fcf</div></div>
+    <div id="how-cmp" style="position: absolute; left: 620px; top: 600px; height: 3px; width: 1080px; background: #131311; transform-origin: left center"></div>
+    <div id="how-cmpl" style="position: absolute; left: 620px; top: 612px; font-size: 28px; color: #56564e">every row compared</div>
+    <div id="how-eq" class="eq" style="left: 1162px; top: 512px">=</div>
+    <div id="how-same" class="tag good" style="position: absolute; left: 1220px; top: 640px; margin: 0">identical · moves</div>
+
+    <div id="how-r3" class="rule" style="top: 710px"></div>
+    <div id="how-s3" class="step" style="top: 740px"><div class="n">if they differ</div><div class="t">Prove a fix</div><div id="how-diff" class="tag bad">q26 · answers differ</div></div>
+    <div id="how-q3a" class="col" style="left: 620px; top: 740px"><div class="sub">price column</div><div class="cellbox">DECIMAL(7,2)</div></div>
+    <div id="how-q3b" class="col" style="left: 1220px; top: 740px"><div class="sub">same column, loaded from CSV</div><div class="cellbox">DOUBLE</div></div>
+    <div id="how-fix" class="col" style="left: 1220px; top: 880px"><div class="cellbox" style="border-color: #145fe4; background: #ffffff">CAST(… AS DECIMAL(7,2))</div></div>
+    <div id="how-rerun" style="position: absolute; left: 1220px; top: 968px; font-size: 28px; color: #56564e">re-run on Zetaris, rows compared again</div>
+    <div id="how-ok" class="tag good" style="position: absolute; left: 620px; top: 892px; margin: 0">rows identical to Databricks</div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo(["#how-hd", "#how-hz"], { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out", stagger: 0.08 }, 0.1);
+    tl.fromTo("#how-r1", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power2.out" }, 0.4);
+    tl.fromTo("#how-s1 .t", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 0.55);
+    tl.fromTo("#how-s1 .n", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.5);
+    tl.fromTo("#how-t1a .trow", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.3, ease: "power2.out", stagger: 0.12 }, 2.0);
+    tl.fromTo("#how-t1b .trow", { opacity: 0, x: 14 }, { opacity: 1, x: 0, duration: 0.3, ease: "power2.out", stagger: 0.12 }, 2.8);
+    tl.to(["#how-ca-a", "#how-ca-b"], { backgroundColor: "#f8ebea", color: "#b02a22", duration: 0.3 }, 5.1);
+    tl.fromTo("#how-blk", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 6.75);
+
+    tl.fromTo("#how-r2", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power2.out" }, 8.8);
+    tl.fromTo("#how-s2 .t", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 9.0);
+    tl.fromTo("#how-s2 .n", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 8.95);
+    tl.fromTo("#how-q2a", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 10.7);
+    tl.fromTo("#how-q2b", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 11.85);
+    tl.fromTo("#how-q2a .cellbox, #how-q2b .cellbox", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.6, ease: "power2.out" }, 15.5);
+    tl.fromTo("#how-eq", { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 16.1);
+    tl.fromTo("#how-same", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 16.3);
+
+    tl.fromTo("#how-r3", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power2.out" }, 16.7);
+    tl.fromTo("#how-s3 .t", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 16.9);
+    tl.fromTo("#how-s3 .n", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 16.85);
+    tl.fromTo("#how-diff", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 17.45);
+    tl.fromTo("#how-q3a", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 17.6);
+    tl.fromTo("#how-q3b", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 17.8);
+    tl.fromTo("#how-fix", { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 18.65);
+    tl.fromTo("#how-cmp", { scaleX: 0 }, { scaleX: 1, duration: 1.4, ease: "power1.inOut" }, 12.95);
+    tl.fromTo("#how-cmpl", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 13.7);
+    tl.fromTo("#how-rerun", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.35, ease: "power3.out" }, 20.7);
+    tl.fromTo("#how-ok", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 22.9);
+    window.__timelines["how"] = tl;
+  </script>
+</template>

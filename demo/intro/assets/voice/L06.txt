@@ -1,0 +1,1 @@
+First, it measures every table on both engines. If the data itself differs, those queries are blocked, not guessed.
