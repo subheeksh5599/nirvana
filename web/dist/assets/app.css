@@ -215,3 +215,26 @@ pre.sql { margin: 0; padding: 14px 16px; background: var(--surface); border-radi
   .hero h1 { font-size: 38px; }
 }
 .a-explained { background: var(--info-wash); color: var(--info); }
+
+/* ---- guided flow */
+.field-label { font-size: 12px; color: var(--ink-3); margin: 0 0 6px; }
+details > summary { cursor: pointer; list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+details.options { margin-top: 6px; }
+details.options > summary, details.older > summary, details.mem > summary { font-size: 13px; color: var(--ink-3); }
+details.options > summary::before, details.older > summary::before, details.mem > summary::before { content: "+ "; }
+details[open].options > summary::before, details[open].older > summary::before, details[open].mem > summary::before { content: "− "; }
+details.panel > summary.panel-head { display: flex; }
+details.panel:not([open]) > summary.panel-head { border-bottom: 0; }
+details.older { margin: 6px 0 18px; }
+details.older > summary { padding: 8px 0 12px; }
+details.mem { margin: 0 0 14px; padding: 10px 12px; border-radius: 8px; background: var(--info-wash, #eef4fd); }
+details.mem > summary { color: var(--info, #145fe4); }
+.next { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 16px; padding: 12px 14px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--page); font-size: 14px; }
+.legend-row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 14px; font-size: 12px; color: var(--ink-3); }
+.legend-row .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.cases { display: grid; gap: 8px; }
+.case { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; }
+.found { margin-top: 14px; }
+.found ul { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.8; }
+.why { font-style: italic; }

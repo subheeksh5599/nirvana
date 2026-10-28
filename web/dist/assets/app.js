@@ -202,17 +202,24 @@ async function landing() {
   }).join("");
 }
 
+function nextStep(run) {
+  const v = (run.summary || {}).verdicts || {};
+  const stuck = (v.blocked || 0) + (v.keep || 0);
+  if (!stuck || run.mode !== "live") return "";
+  return `<div class="next"><div><b>${stuck} ${stuck === 1 ? "query needs" : "queries need"} a closer look.</b> The agent can find out why and prove a fix.</div><a class="btn primary small" href="/app/agent?run=${encodeURIComponent(run.id)}" data-nav>Fix with the agent →</a></div>`;
+}
+
 // ------------------------------------------------------------------ app shell
 
 const NAV = [
-  ["Run", [["overview", "Overview"], ["run", "Live run"], ["agent", "Agent"], ["audit", "Overnight audit"]]],
-  ["Results", [["queries", "Queries"], ["tables", "Tables"], ["rows", "Row diff"], ["guard", "Guard rules"], ["receipt", "Receipt"]]],
-  ["Library", [["workload", "Workload"], ["memory", "Memory"], ["history", "History"]]],
+  ["", [["overview", "1. Start a check"], ["run", "2. Live run"], ["agent", "3. Fix with the agent"], ["audit", "Overnight audit"]]],
+  ["Evidence", [["queries", "Queries"], ["tables", "Tables"], ["rows", "Row diff"], ["guard", "Guard rules"]]],
+  ["More", [["receipt", "Receipt"], ["memory", "Memory"], ["workload", "Workload"], ["history", "History"]]],
 ];
 
 function shell(active, title) {
   const runQ = state.runId ? `?run=${encodeURIComponent(state.runId)}` : "";
-  const items = NAV.map(([g, list]) => `<div class="group">${g}</div>` + list.map(([k, label]) => `<a class="item ${k === active ? "active" : ""}" href="/app/${k}${["overview", "workload", "memory", "history", "rows", "guard", "agent", "audit"].includes(k) ? "" : runQ}" data-nav><span>${label}</span><span class="count" id="count-${k}"></span></a>`).join("")).join("");
+  const items = NAV.map(([g, list]) => (g ? `<div class="group">${g}</div>` : `<div style="height:14px"></div>`) + list.map(([k, label]) => `<a class="item ${k === active ? "active" : ""}" href="/app/${k}${["overview", "workload", "memory", "history", "rows", "guard", "agent", "audit"].includes(k) ? "" : runQ}" data-nav><span>${label}</span><span class="count" id="count-${k}"></span></a>`).join("")).join("");
   root.innerHTML = `
   <div class="app">
     <aside class="rail">
@@ -273,27 +280,36 @@ const noRun = `<div class="panel"><div class="empty">No run yet. <a href="/app" 
 // ------------------------------------------------------------------ overview
 
 async function paneOverview() {
-  const pane = shell("overview", "Overview");
+  const pane = shell("overview", "Start a check");
   pane.innerHTML = `
-    <div class="panel"><div class="panel-head"><h2>Engines</h2><button class="btn small" id="check">Check connections</button></div>
-      <div class="panel-body"><div class="grid4" id="engines"><div class="note">Press Check connections to run SELECT 1 on each engine.</div></div></div></div>
-    <div class="panel"><div class="panel-head"><h2>Start a run</h2><span class="sub" id="mode-note"></span></div>
+    <div class="panel"><div class="panel-head"><div><h2>Check which queries can leave Databricks</h2><div class="sub">Runs each query on both engines and compares every row</div></div><button class="btn small" id="check">Check connections</button></div>
       <div class="panel-body">
+        <div class="grid4" id="engines" style="margin-bottom:16px" hidden></div>
+        <div class="field-label">Which Zetaris copy?</div>
+        <div class="seg" id="target-seg" style="margin-bottom:16px"><button data-v="" class="on">Same parquet files</button><button data-v="NIRVANA_CSV">Loaded from CSV exports</button></div>
+        <div class="field-label">Which queries?</div>
         <div class="form-row">
-          <div class="seg" id="engines-seg"><button data-v="live" class="on">Databricks to Zetaris</button><button data-v="rehearsal">Local rehearsal</button></div>
-          <select id="target-loc" class="btn" title="Which copy on Zetaris to judge against"><option value="">Zetaris: same parquet files</option><option value="NIRVANA_CSV">Zetaris: loaded from CSV exports</option></select>
-          <label class="check"><input type="checkbox" id="use-model" checked> Ask Nemotron when rules fail</label>
-          <label class="check"><input type="checkbox" id="use-memory" checked> Use H-MEM memory</label>
-        </div>
-        <div class="form-row">
-          <input type="text" id="queries" placeholder="All 103 queries, or ids like q3 q42 q90">
-          <button class="btn primary" id="start">Start run</button>
+          <input type="text" id="queries" placeholder="All 103, or e.g. q3 q7 q45">
+          <button class="btn primary" id="start">Start check</button>
           <span id="start-msg" class="note"></span>
         </div>
-        <div class="note" id="rehearsal-note" hidden>The rehearsal runs two local DuckDB engines over generated TPC-DS data, the second with every DECIMAL stored as DOUBLE. It is labelled as a rehearsal everywhere.</div>
+        <details class="options"><summary>Options</summary>
+          <div class="form-row" style="margin:12px 0 0">
+            <div class="seg" id="engines-seg"><button data-v="live" class="on">Databricks to Zetaris</button><button data-v="rehearsal">Local rehearsal</button></div>
+            <label class="check"><input type="checkbox" id="use-model" checked> Ask Nemotron when rules fail</label>
+            <label class="check"><input type="checkbox" id="use-memory" checked> Use H-MEM memory</label>
+          </div>
+          <div class="note" id="rehearsal-note" hidden>Two local DuckDB engines over generated data, labelled as a rehearsal everywhere.</div>
+        </details>
+        <span id="mode-note" class="note"></span>
       </div></div>
-    <div class="panel"><div class="panel-head"><h2>Latest run</h2><span class="sub" id="latest-sub"></span></div><div class="panel-body" id="latest"><div class="note">Loading</div></div></div>`;
+    <div class="panel"><div class="panel-head"><h2>Latest result</h2><span class="sub" id="latest-sub"></span></div><div class="panel-body" id="latest"><div class="note">Loading</div></div></div>`;
 
+  let target = "";
+  pane.querySelectorAll("#target-seg button").forEach((b) => b.addEventListener("click", () => {
+    target = b.dataset.v;
+    pane.querySelectorAll("#target-seg button").forEach((x) => x.classList.toggle("on", x === b));
+  }));
   let engines = "live";
   pane.querySelectorAll("#engines-seg button").forEach((b) => b.addEventListener("click", () => {
     engines = b.dataset.v;
@@ -301,14 +317,14 @@ async function paneOverview() {
     document.getElementById("rehearsal-note").hidden = engines !== "rehearsal";
   }));
 
-  document.getElementById("check").addEventListener("click", checkEngines);
+  document.getElementById("check").addEventListener("click", () => { document.getElementById("engines").hidden = false; checkEngines(); });
   document.getElementById("start").addEventListener("click", async () => {
     const msg = document.getElementById("start-msg");
     const ids = document.getElementById("queries").value.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
     msg.textContent = "Starting";
     msg.className = "note";
     try {
-      const r = await api("/runs", { method: "POST", body: JSON.stringify({ engines, queries: ids.length ? ids : null, use_model: document.getElementById("use-model").checked, use_memory: document.getElementById("use-memory").checked, target_location: engines === "live" ? (document.getElementById("target-loc").value || null) : null }) });
+      const r = await api("/runs", { method: "POST", body: JSON.stringify({ engines, queries: ids.length ? ids : null, use_model: document.getElementById("use-model").checked, use_memory: document.getElementById("use-memory").checked, target_location: engines === "live" ? (target || null) : null }) });
       setRun(r.id);
       state.runs = null;
       navigate(`/app/run?run=${encodeURIComponent(r.id)}`);
@@ -332,7 +348,7 @@ async function paneOverview() {
     if (!done) { el.innerHTML = `<div class="note">No finished run yet.</div>`; return; }
     const s = done.summary;
     document.getElementById("latest-sub").textContent = `${engineLabel(done, "source")} to ${engineLabel(done, "target")}, ${when(done.finished_at)}`;
-    el.innerHTML = `<div class="board-head" style="margin:0"><div class="big">${s.movable}<small> of ${s.queries} queries can move</small></div><a class="btn small" href="/app/queries?run=${encodeURIComponent(done.id)}" data-nav>Open results</a></div>${verdictBar(s.verdicts, s.queries)}`;
+    el.innerHTML = `<div class="board-head" style="margin:0"><div class="big">${s.movable}<small> of ${s.queries} queries can move</small></div><a class="btn small" href="/app/queries?run=${encodeURIComponent(done.id)}" data-nav>Open results</a></div>${verdictBar(s.verdicts, s.queries)}${nextStep(done)}`;
   } catch (e) {
     document.getElementById("latest").innerHTML = `<div class="error">${esc(e.message)}</div>`;
   }
@@ -364,12 +380,13 @@ async function paneRun() {
   if (!run) { pane.innerHTML = noRun; return; }
   const total = run.query_ids.length;
   pane.innerHTML = `
-    <div class="panel"><div class="panel-head"><div><h2 class="mono">${esc(run.id)}</h2><div class="sub">${esc(engineLabel(run, "source"))} to ${esc(engineLabel(run, "target"))}${run.mode === "rehearsal" ? ", local rehearsal" : ""}</div></div>
+    <div class="panel"><div class="panel-head"><div><h2>${esc(engineLabel(run, "source"))} → ${esc(engineLabel(run, "target"))}${(run.target || {}).location === "NIRVANA_CSV" ? " · CSV copy" : ""}</h2><div class="sub mono">${esc(run.id)}${run.mode === "rehearsal" ? " · local rehearsal" : ""}</div></div>
       <div style="display:flex;gap:10px;align-items:center"><span class="tag" id="run-status"></span><button class="btn small" id="cancel" hidden>Cancel</button></div></div>
       <div class="panel-body"><div class="progress"><span id="prog" style="width:0%"></span></div><div class="note" style="margin-top:8px" id="prog-text"></div><div id="run-summary"></div></div></div>
-    <div class="panel"><div class="panel-head"><h2>Step 1. Source alignment</h2><span class="sub" id="align-sub"></span></div><div class="panel-body"><div class="tiles" id="tiles"></div></div></div>
-    <div class="panel"><div class="panel-head"><h2>Step 2. Queries</h2><span class="sub">Click a finished cell to open it</span></div><div class="panel-body"><div class="cells" id="cells">${run.query_ids.map((q) => `<div class="cell" id="cell-${q}" data-q="${q}">${q}</div>`).join("")}</div></div></div>
-    <div class="panel"><div class="panel-head"><h2>Events</h2></div><div class="panel-body events" id="events"></div></div>`;
+    <div class="panel"><div class="panel-head"><div><h2>1. Is the data the same?</h2><div class="sub">Each table is measured on both engines</div></div><span class="sub" id="align-sub"></span></div><div class="panel-body"><div class="tiles" id="tiles"></div></div></div>
+    <div class="panel"><div class="panel-head"><div><h2>2. Do the answers match?</h2><div class="sub">Click a query to see its rows</div></div></div><div class="panel-body"><div class="cells" id="cells">${run.query_ids.map((q) => `<div class="cell" id="cell-${q}" data-q="${q}">${q}</div>`).join("")}</div>
+      <div class="legend-row">${["move", "move_note", "rewrite", "keep", "blocked"].map((k) => `<span><i class="sw c-${k}"></i>${VERDICT_LABEL[k]}</span>`).join("")}</div></div></div>
+    <details class="panel events-fold"><summary class="panel-head"><h2>Event log</h2></summary><div class="panel-body events" id="events"></div></details>`;
 
   document.getElementById("cells").addEventListener("click", (e) => {
     const c = e.target.closest(".cell.done");
@@ -421,7 +438,7 @@ async function paneRun() {
     events.insertAdjacentHTML("afterbegin", `<div><span class="k">${new Date(e.at * 1000).toLocaleTimeString("en-GB")}</span><span>${esc(e.kind)}</span><span class="muted">${esc(text)}</span></div>`);
   };
   const summarize = (s) => {
-    document.getElementById("run-summary").innerHTML = `<div class="board-head" style="margin:18px 0 0"><div class="big">${s.movable}<small> of ${s.queries} queries can move</small></div><a class="btn small" href="/app/queries?run=${encodeURIComponent(run.id)}" data-nav>Open results</a></div>${verdictBar(s.verdicts, s.queries)}`;
+    document.getElementById("run-summary").innerHTML = `<div class="board-head" style="margin:18px 0 0"><div class="big">${s.movable}<small> of ${s.queries} queries can move</small></div><a class="btn small" href="/app/queries?run=${encodeURIComponent(run.id)}" data-nav>Open results</a></div>${verdictBar(s.verdicts, s.queries)}${nextStep({ ...run, summary: s })}`;
   };
   const handle = (e) => {
     if (e.kind === "aligned") addTile(e.data);
@@ -684,155 +701,178 @@ const TOOL_LABEL = { profile_column: "Profile a column", compare_column: "Compar
 function stepResult(st) {
   const r = st.result || {};
   if (r.error) return `<div class="error">${esc(r.error)}</div>`;
+  const ok = (t) => `<b style="color:var(--good)">${t}</b>`;
   if (st.tool === "profile_column") {
-    const k = ["type", "rows", "non_null", "min", "max", "min_length", "max_length"];
-    return `<table class="t" style="width:auto"><thead><tr><th></th>${k.map((x) => `<th>${esc(x.replace("_", " "))}</th>`).join("")}</tr></thead><tbody>${["databricks", "zetaris"].map((e) => `<tr><td>${e === "databricks" ? "Databricks" : "Zetaris"}</td>${k.map((x) => `<td class="mono">${esc((r[e] || {})[x] ?? "NULL")}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+    const k = ["type", "rows", "non_null", "min", "max"];
+    return `<details><summary class="note">Profiled on both engines</summary><table class="t" style="width:auto;margin-top:6px"><thead><tr><th></th>${k.map((x) => `<th>${esc(x.replace("_", " "))}</th>`).join("")}</tr></thead><tbody>${["databricks", "zetaris"].map((e) => `<tr><td>${e === "databricks" ? "Databricks" : "Zetaris"}</td>${k.map((x) => `<td class="mono">${esc((r[e] || {})[x] ?? "NULL")}</td>`).join("")}</tr>`).join("")}</tbody></table></details>`;
   }
   if ("differing_rows" in r) {
-    const ex = (r.examples || []).map((x) => `<tr><td class="mono">${esc(x.key)}</td><td class="mono">${esc(x.databricks ?? "NULL")}</td><td class="mono" style="background:var(--bad-wash)">${esc(x.zetaris ?? "NULL")}</td></tr>`).join("");
-    return `<div class="note"><b class="mono">${fmt(r.differing_rows)}</b> of ${fmt(r.joined_rows)} rows differ${r.expression ? ` after <span class="mono">${esc(r.expression)}</span>` : ""}${r.proven ? " · <b style='color:var(--good)'>proven</b>" : ""}</div>${ex ? `<table class="t" style="width:auto;margin-top:6px"><thead><tr><th>Key</th><th>Databricks</th><th>Zetaris</th></tr></thead><tbody>${ex}</tbody></table>` : ""}`;
+    const head = r.differing_rows === 0
+      ? `${ok("✓")} All ${fmt(r.joined_rows)} rows match${r.expression ? ` with <span class="mono">${esc(r.expression)}</span>` : ""}`
+      : `<b style="color:var(--bad)">${fmt(r.differing_rows)}</b> of ${fmt(r.joined_rows)} rows differ${r.expression ? ` with <span class="mono">${esc(r.expression)}</span>` : ""}`;
+    const ex = (r.examples || []).slice(0, 3).map((x) => `<tr><td class="mono">${esc(x.databricks ?? "NULL")}</td><td class="mono" style="background:var(--bad-wash)">${esc(x.zetaris ?? "NULL")}</td></tr>`).join("");
+    return `<div class="note">${head}</div>${ex ? `<table class="t" style="width:auto;margin-top:6px"><thead><tr><th>Databricks</th><th>Zetaris</th></tr></thead><tbody>${ex}</tbody></table>` : ""}`;
   }
-  if (r.rules) return r.rules.map((x) => `<div class="note"><span class="mono">${esc(x.rule)}</span>: ${fmt(x.breaking)} of ${fmt(x.rows)} rows break it</div>`).join("");
-  if (r.status) return `<div class="note">Rows on Zetaris: <b>${esc(r.status)}</b> against Databricks (${esc(r.source_fp)} / ${esc(r.target_fp)})${r.proven ? " · <b style='color:var(--good)'>proven</b>" : ""}</div>`;
+  if (r.rules) return `<div class="note">${r.rules.length} guard rules installed on Zetaris</div>`;
+  if (r.status) return `<div class="note">${r.status === "identical" ? `${ok("✓")} Rows match Databricks` : `<b style="color:var(--bad)">Rows still differ</b> from Databricks`}</div>`;
   if (r.summary) return `<div class="note">${esc(r.summary)}</div>`;
   return "";
 }
 
-function invCard(inv) {
-  const state = inv.status === "running" ? `<span class="tag v-rewrite">Investigating</span>` : inv.status === "failed" ? `<span class="tag v-keep">Failed</span>` : inv.cleared ? `<span class="tag v-move">${inv.kind === "table" ? "Cleared with proof" : "Fixed with proof"}</span>` : `<span class="tag v-blocked">Not proven</span>`;
+function modelName(m) {
+  const x = (m || "").split("/").pop().replace(":free", "");
+  return x.replace(/^nemotron-/, "Nemotron ").replace(/-a\d+b$/, "").replace(/-/g, " ");
+}
+
+function findingText(f) {
+  if (f.kind === "repair") return `<span class="mono">${esc(f.column)}</span> fixed by <span class="mono">${esc(f.expression)}</span>`;
+  if (f.kind === "same_values") return `<span class="mono">${esc(f.column)}</span> unchanged, only its type differs`;
+  if (f.kind === "rewrite") return `query fixed by a rewrite`;
+  return esc(f.detail);
+}
+
+function invCard(inv, open = true) {
+  const state = inv.status === "running" ? `<span class="tag v-rewrite">Working…</span>` : inv.status === "failed" ? `<span class="tag v-keep">Failed</span>` : inv.cleared ? `<span class="tag v-move">Proven</span>` : `<span class="tag v-blocked">No proof found</span>`;
   const took = inv.finished_at ? `${Math.round(inv.finished_at - inv.started_at)} s` : "";
-  const mem = (inv.recalled || []).length ? `<div class="panel-body" style="border-bottom:1px solid var(--line)"><div class="note" style="margin-bottom:6px">Recalled from Meterless H-MEM before the first step</div>${inv.recalled.map((m) => `<div class="note mono" style="margin:2px 0">${esc(m.content)}</div>`).join("")}</div>` : "";
+  const recalled = [...new Set((inv.recalled || []).map((m) => m.content))];
+  const mem = recalled.length ? `<details class="mem"><summary>H-MEM remembered ${recalled.length} earlier ${recalled.length === 1 ? "finding" : "findings"}</summary>${recalled.map((c) => `<div class="note mono" style="margin:4px 0">${esc(c)}</div>`).join("")}</details>` : "";
   const steps = (inv.steps || []).map((st) => `<li><span class="dot ${st.ok ? "ok" : "bad"}" style="margin-top:6px"></span><div>
-      <div class="st">${st.n}. ${esc(TOOL_LABEL[st.tool] || st.tool)} ${st.args && st.args.column ? `<span class="mono faint">${esc(st.args.column)}</span>` : ""}</div>
-      ${st.why ? `<div class="dt">Nemotron: “${esc(st.why)}”</div>` : ""}
+      <div class="st">${esc(TOOL_LABEL[st.tool] || st.tool)} ${st.args && st.args.column ? `<span class="mono faint">${esc(st.args.column)}</span>` : ""}</div>
+      ${st.why ? `<div class="dt why">“${esc(st.why)}”</div>` : ""}
       <div style="margin-top:6px">${stepResult(st)}</div></div>
-      <div class="ms">${st.model_ms ? `model ${ms(st.model_ms)}` : ""}${st.ms ? `<br>engines ${ms(st.ms)}` : ""}</div></li>`).join("");
-  const findings = (inv.findings || []).map((f) => `<div class="note" style="margin:4px 0"><span class="tag ${f.kind === "guard" ? "v-blocked" : "v-move"}">${esc(f.kind.replace("_", " "))}</span> ${esc(f.detail)} <span class="faint">(${esc(f.evidence)})</span></div>`).join("");
-  return `<div class="panel"><div class="panel-head"><div><h2><span class="mono">${esc(inv.subject)}</span> on ${esc(inv.candidate)}</h2><div class="sub">${inv.kind === "table" ? "blocked table" : "query kept on Databricks"} · ${esc(inv.model || "")} through Nightshift · ${(inv.steps || []).length} steps ${took ? "· " + took : ""}</div></div>${state}</div>
-    ${mem}<div class="panel-body"><ul class="timeline">${steps || `<li><span></span><div class="dt">Reading both engines…</div><span></span></li>`}</ul>
-    ${findings ? `<div style="margin-top:14px"><div class="note" style="margin-bottom:6px">Proven findings</div>${findings}</div>` : ""}
-    ${inv.error ? `<div class="error">${esc(inv.error)}</div>` : ""}</div></div>`;
+      <div class="ms">${st.model_ms || st.ms ? ms((st.model_ms || 0) + (st.ms || 0)) : ""}</div></li>`).join("");
+  const findings = (inv.findings || []).map((f) => `<li>${findingText(f)}</li>`).join("");
+  const title = `${inv.kind === "table" ? "Table" : "Query"} <span class="mono">${esc(inv.subject)}</span>`;
+  const body = `${mem}<ul class="timeline">${steps || `<li><span></span><div class="dt">Reading both engines…</div><span></span></li>`}</ul>
+    ${findings ? `<div class="found"><div class="field-label">Proven</div><ul>${findings}</ul></div>` : ""}
+    ${inv.error ? `<div class="error">${esc(inv.error)}</div>` : ""}`;
+  return `<details class="panel inv" ${open ? "open" : ""}><summary class="panel-head"><div><h2>${title}</h2><div class="sub">${esc(when(inv.started_at))} · ${(inv.steps || []).length} steps${took ? " · " + took : ""} · ${esc(modelName(inv.model))} via Nightshift</div></div>${state}</summary>
+    <div class="panel-body">${body}</div></details>`;
 }
 
 async function paneAgent() {
-  const pane = shell("agent", "Agent");
+  const pane = shell("agent", "Fix with the agent");
   let runs = [];
   try { runs = (await api("/runs")).filter((r) => r.status === "done" && r.mode === "live" && r.summary); } catch { /* shown below */ }
   const wanted = new URLSearchParams(location.search).get("run");
-  const csv = runs.find((r) => r.id === wanted) || runs[0];
+  const stuck = (r) => ((r.summary.verdicts || {}).blocked || 0) + ((r.summary.verdicts || {}).keep || 0);
+  let run = runs.find((r) => r.id === wanted) || runs.find((r) => stuck(r) > 0) || runs[0];
   pane.innerHTML = `
-    <div class="panel"><div class="panel-head"><div><h2>Investigate what the checks could not settle</h2><div class="sub">Nemotron, through Meterless Nightshift, picks each next check; Zetaris and Databricks run it; only rows prove anything</div></div></div>
-      <div class="panel-body">
-        <div class="form-row">
-          <select id="ag-run" class="btn">${runs.map((r) => `<option value="${esc(r.id)}" ${csv && r.id === csv.id ? "selected" : ""}>${esc(r.target.location)} · ${r.summary.movable}/${r.summary.queries} · ${esc(when(r.finished_at))}</option>`).join("")}</select>
-          <select id="ag-case" class="btn"></select>
-          <button class="btn primary" id="ag-go">Investigate</button>
-          <span class="note" id="ag-msg"></span>
-        </div>
-        <div class="form-row" style="margin-bottom:0">
-          <button class="btn" id="ag-rejudge">Re-judge the blocked queries with the proven findings</button>
-          <span class="note" id="ag-rmsg"></span>
-        </div>
-      </div></div>
-    <div id="ag-list"><div class="empty">Loading</div></div>`;
-  const caseSel = document.getElementById("ag-case");
-  const fillCases = async () => {
-    const id = document.getElementById("ag-run").value;
-    if (!id) { caseSel.innerHTML = ""; return; }
-    const [al, js] = await Promise.all([api(`/runs/${id}/alignment`), api(`/runs/${id}/judgements`)]);
-    caseSel.innerHTML = al.filter((a) => a.status === "not_aligned").map((a) => `<option value="table:${esc(a.table)}">Blocked table ${esc(a.table)}</option>`).join("")
-      + js.filter((j) => j.verdict === "keep").map((j) => `<option value="query:${esc(j.query_id)}">Kept query ${esc(j.query_id)}</option>`).join("");
-    if (!caseSel.innerHTML) caseSel.innerHTML = `<option value="">Nothing left to investigate</option>`;
-  };
-  document.getElementById("ag-run").addEventListener("change", fillCases);
+    <div class="panel"><div class="panel-head"><div><h2>What needs a closer look</h2><div class="sub">Nemotron picks each check, Zetaris and Databricks run it, and only matching rows count as proof</div></div>
+      <select id="ag-run" class="btn small" title="Which run">${runs.map((r) => `<option value="${esc(r.id)}" ${run && r.id === run.id ? "selected" : ""}>${esc(r.target.location || "Zetaris")} · ${r.summary.queries} queries · ${esc(when(r.finished_at))}</option>`).join("")}</select></div>
+      <div class="panel-body"><div id="ag-cases"><div class="note">Loading</div></div><div class="note" id="ag-msg"></div></div></div>
+    <div id="ag-list"></div>`;
   const list = document.getElementById("ag-list");
-  let timer = null;
+  let timer = null, invs = [];
+  const render = async () => {
+    const id = document.getElementById("ag-run").value;
+    run = runs.find((r) => r.id === id);
+    const cases = document.getElementById("ag-cases");
+    if (!run) { cases.innerHTML = `<div class="note">No finished live run yet. <a href="/app" data-nav>Start a check</a> first.</div>`; return; }
+    const [al, js] = await Promise.all([api(`/runs/${id}/alignment`), api(`/runs/${id}/judgements`)]);
+    const mine = invs.filter((i) => i.run_id === id);
+    const latest = (kind, subject) => mine.find((i) => i.kind === kind && i.subject === subject);
+    const blockedBy = (t) => js.filter((j) => j.verdict === "blocked" && (j.note || "").includes(t)).length;
+    const rows = al.filter((a) => a.status === "not_aligned").map((a) => ({ kind: "table", subject: a.table, what: `Table differs between the engines · blocks ${blockedBy(a.table)} ${blockedBy(a.table) === 1 ? "query" : "queries"}` }))
+      .concat(js.filter((j) => j.verdict === "keep").map((j) => ({ kind: "query", subject: j.query_id, what: "Answers differ and no rewrite matched" })));
+    const cleared = rows.filter((c) => c.kind === "table" && (latest("table", c.subject) || {}).cleared);
+    const blockedQ = js.filter((j) => j.verdict === "blocked" && j.cause === "input_not_aligned").length;
+    cases.innerHTML = rows.length ? `<div class="cases">${rows.map((c) => {
+      const inv = latest(c.kind, c.subject);
+      const action = inv && inv.status === "running" ? `<span class="tag v-rewrite">Working…</span>`
+        : inv && inv.cleared ? `<span class="tag v-move">Proven</span>`
+        : `<button class="btn primary small" data-kind="${c.kind}" data-subject="${esc(c.subject)}">${inv ? "Try again" : "Investigate"}</button>`;
+      return `<div class="case"><div><div class="mono">${esc(c.subject)}</div><div class="note">${esc(c.what)}</div></div>${action}</div>`;
+    }).join("")}</div>
+      ${cleared.length && blockedQ ? `<div class="next"><div><b>${cleared.length} ${cleared.length === 1 ? "table" : "tables"} proven.</b> Re-check the ${blockedQ} blocked ${blockedQ === 1 ? "query" : "queries"} with what the agent found.</div><button class="btn primary small" id="ag-rejudge">Re-check blocked queries →</button></div>` : ""}`
+      : `<div class="note">Nothing to fix in this run: every query was judged. Pick another run above.</div>`;
+    cases.querySelectorAll("button[data-kind]").forEach((b) => b.addEventListener("click", () => start(b.dataset.kind, b.dataset.subject)));
+    const rj = document.getElementById("ag-rejudge");
+    if (rj) rj.addEventListener("click", () => rejudge(js, cleared.map((c) => latest("table", c.subject).id)));
+    const older = invs.filter((i) => i.run_id !== id);
+    list.innerHTML = mine.map((i, n) => invCard(i, n === 0)).join("")
+      + (older.length ? `<details class="older"><summary>Earlier investigations (${older.length})</summary>${older.map((i) => invCard(i, false)).join("")}</details>` : "");
+  };
   const load = async () => {
     try {
-      const all = await api("/investigations");
-      list.innerHTML = all.length ? all.map(invCard).join("") : `<div class="panel"><div class="empty">No investigation yet.</div></div>`;
-      const c = document.getElementById("count-agent");
-      if (c) c.textContent = all.length || "";
+      invs = await api("/investigations");
+      await render();
       clearTimeout(timer);
-      if (all.some((i) => i.status === "running") && location.pathname.startsWith("/app/agent")) timer = setTimeout(load, 2000);
+      if (invs.some((i) => i.status === "running") && location.pathname.startsWith("/app/agent")) timer = setTimeout(load, 2000);
     } catch (e) { list.innerHTML = `<div class="panel"><div class="empty">${esc(e.message)}</div></div>`; }
   };
-  document.getElementById("ag-go").addEventListener("click", async () => {
+  const start = async (kind, subject) => {
     const msg = document.getElementById("ag-msg");
-    const [kind, subject] = (caseSel.value || ":").split(":");
-    if (!subject) return;
-    msg.className = "note"; msg.textContent = "Starting";
+    msg.className = "note"; msg.textContent = "";
     try {
-      await api("/investigations", { method: "POST", body: JSON.stringify({ run_id: document.getElementById("ag-run").value, table: kind === "table" ? subject : null, query_id: kind === "query" ? subject : null }) });
-      msg.textContent = ""; load();
+      await api("/investigations", { method: "POST", body: JSON.stringify({ run_id: run.id, table: kind === "table" ? subject : null, query_id: kind === "query" ? subject : null }) });
+      load();
     } catch (e) { msg.className = "error"; msg.textContent = e.message; }
-  });
-  document.getElementById("ag-rejudge").addEventListener("click", async () => {
-    const m = document.getElementById("ag-rmsg");
-    const id = document.getElementById("ag-run").value;
-    const run = runs.find((r) => r.id === id);
+  };
+  const rejudge = async (js, ids) => {
+    const msg = document.getElementById("ag-msg");
     try {
-      const [js, all] = await Promise.all([api(`/runs/${id}/judgements`), api("/investigations")]);
-      const cleared = {};
-      all.filter((i) => i.kind === "table" && i.cleared && i.candidate === run.target.location).forEach((i) => { if (!cleared[i.subject]) cleared[i.subject] = i.id; });
       const blocked = js.filter((j) => j.verdict === "blocked" && j.cause === "input_not_aligned").map((j) => j.query_id);
-      if (!Object.keys(cleared).length) { m.className = "error"; m.textContent = "No table has been cleared yet"; return; }
-      const r = await api("/runs", { method: "POST", body: JSON.stringify({ engines: "live", queries: blocked, target_location: run.target.location, explained_by: Object.values(cleared) }) });
+      const r = await api("/runs", { method: "POST", body: JSON.stringify({ engines: "live", queries: blocked, use_model: false, target_location: run.target.location, explained_by: ids }) });
       setRun(r.id); state.runs = null;
       navigate(`/app/run?run=${encodeURIComponent(r.id)}`);
-    } catch (e) { m.className = "error"; m.textContent = e.message; }
-  });
-  await fillCases();
+    } catch (e) { msg.className = "error"; msg.textContent = e.message; }
+  };
+  document.getElementById("ag-run").addEventListener("change", render);
   load();
 }
 
 // ------------------------------------------------------------------ overnight audit
 
-function auditCard(a) {
+function auditCard(a, open = true) {
   const r = a.report || {};
-  const st = a.status === "running" ? `<span class="tag v-rewrite">Running</span>` : a.status === "failed" ? `<span class="tag v-keep">Failed</span>` : `<span class="tag v-move">Morning report ready</span>`;
-  const phases = (a.phases || []).map((p, i) => `<li><span class="dot ${p.status === "done" ? "ok" : p.status === "failed" ? "bad" : ""}" style="margin-top:6px"></span><div><div class="st">${i + 1}. ${esc(p.name)}</div><div class="dt">${esc(p.status === "waiting" ? "waiting" : p.status === "skipped" ? `skipped: ${p.detail}` : p.detail)}</div></div><div class="ms">${p.started_at && p.finished_at ? ms((p.finished_at - p.started_at) * 1000) : ""}</div></li>`).join("");
+  const st = a.status === "running" ? `<span class="tag v-rewrite">Running</span>` : a.status === "failed" ? `<span class="tag v-keep">Failed</span>` : `<span class="tag v-move">Done</span>`;
+  const phases = (a.phases || []).map((p) => `<li><span class="dot ${p.status === "done" ? "ok" : p.status === "failed" ? "bad" : ""}" style="margin-top:6px"></span><div><div class="st">${esc(p.name)}</div><div class="dt">${esc(p.status === "waiting" ? "waiting" : p.status === "skipped" ? `skipped: ${p.detail}` : p.detail)}</div></div><div class="ms">${p.started_at && p.finished_at ? ms((p.finished_at - p.started_at) * 1000) : ""}</div></li>`).join("");
   const report = a.status === "done" ? `
-    <div class="board-head" style="margin:4px 0 14px"><div class="big">${r.movable_before}<small> can move before the agent</small></div><div class="big">${r.movable_after}<small> of ${r.queries} after</small></div></div>
-    <div class="grid4" style="margin-bottom:14px">
-      <div class="stat"><div class="k">Queries unblocked by the agent</div><div class="v">${r.unblocked_by_agent}</div></div>
-      <div class="stat"><div class="k">Kept queries the agent fixed</div><div class="v">${r.fixed_by_agent} / ${r.queries_kept}</div></div>
-      <div class="stat"><div class="k">Blocked tables cleared</div><div class="v">${r.tables_cleared} / ${r.tables_blocked}</div></div>
-      <div class="stat"><div class="k">Model steps, all through Nightshift</div><div class="v">${r.model_steps}</div></div>
+    <div class="board-head" style="margin:4px 0 18px"><div class="big">${r.movable_before} → ${r.movable_after}<small> of ${r.queries} queries can move</small></div></div>
+    <div class="grid4" style="margin-bottom:18px">
+      <div class="stat"><div class="k">Unblocked by the agent</div><div class="v">${r.unblocked_by_agent}</div></div>
+      <div class="stat"><div class="k">Tables proven</div><div class="v">${r.tables_cleared}/${r.tables_blocked}</div></div>
+      <div class="stat"><div class="k">Guard rules installed</div><div class="v">${(r.guards || []).length}</div></div>
+      <div class="stat"><div class="k">Stay on Databricks</div><div class="v">${r.queries - r.movable_after}</div></div>
     </div>
-    ${(r.repairs || []).length ? `<div class="note" style="margin-bottom:4px">Repairs proven on every row</div>${r.repairs.map((x) => `<div class="mono note">${esc(x.table)}.${esc(x.column)} → ${esc(x.expression)}</div>`).join("")}` : ""}
-    ${(r.same_values || []).length ? `<div class="note" style="margin:10px 0 4px">Columns proven unchanged (type only)</div><div class="mono note">${r.same_values.map((x) => esc(`${x.table}.${x.column}`)).join(", ")}</div>` : ""}
-    ${(r.guards || []).length ? `<div class="note" style="margin:10px 0 4px">Guard rules now enforced by Zetaris</div>${r.guards.map((g) => `<div class="mono note">${esc(g.table)}.${esc(g.rule)}: ${fmt(g.breaking)} of ${fmt(g.rows)} rows break it today</div>`).join("")}` : ""}
-    ${(r.still_open || []).length ? `<div class="note" style="margin:10px 0 4px">Investigated without a fix (${r.queries - r.movable_after} queries stay on Databricks in total)</div><div class="mono note">${r.still_open.map(esc).join(", ")}</div>` : ""}` : "";
-  return `<div class="panel"><div class="panel-head"><div><h2>Audit of ${esc(a.target_location)}</h2><div class="sub">started ${esc(when(a.started_at))}${a.finished_at ? `, finished ${esc(when(a.finished_at))} (${ms((a.finished_at - a.started_at) * 1000)})` : ""}</div></div>${st}</div>
-    <div class="panel-body">${report}<ul class="timeline" style="margin-top:8px">${phases}</ul>${a.error ? `<div class="error">${esc(a.error)}</div>` : ""}</div></div>`;
+    ${(r.repairs || []).length ? `<div class="found"><div class="field-label">Fixes proven on every row</div><ul>${r.repairs.map((x) => `<li><span class="mono">${esc(x.table)}.${esc(x.column)}</span> fixed by <span class="mono">${esc(x.expression)}</span></li>`).join("")}</ul></div>` : ""}
+    <details style="margin-top:14px"><summary class="note">What ran, step by step</summary><ul class="timeline" style="margin-top:8px">${phases}</ul></details>`
+    : `<ul class="timeline">${phases}</ul>`;
+  return `<details class="panel" ${open ? "open" : ""}><summary class="panel-head"><div><h2>${esc(a.target_location === "NIRVANA_CSV" ? "CSV copy" : a.target_location)} · ${esc(when(a.started_at))}</h2><div class="sub">${a.finished_at ? `took ${Math.round((a.finished_at - a.started_at) / 60)} min` : "running"}</div></div>${st}</summary>
+    <div class="panel-body">${report}${a.error ? `<div class="error">${esc(a.error)}</div>` : ""}</div></details>`;
 }
 
 async function paneAudit() {
   const pane = shell("audit", "Overnight audit");
   pane.innerHTML = `
-    <div class="panel"><div class="panel-head"><div><h2>Start it tonight, read it in the morning</h2><div class="sub">Runs every query, hands everything blocked or kept to the agent, re-judges with what it proved, and installs Zetaris guard rules for every repair</div></div></div>
+    <div class="panel"><div class="panel-head"><div><h2>Start it tonight, read it in the morning</h2><div class="sub">Every query, every fix the agent can prove, guard rules installed. About 35 minutes.</div></div></div>
       <div class="panel-body"><div class="form-row" style="margin-bottom:0">
-        <select id="au-target" class="btn"><option value="NIRVANA_CSV">Zetaris copy loaded from CSV exports</option><option value="NIRVANA_TPCDS">Zetaris copy from the same parquet files</option></select>
-        <button class="btn primary" id="au-go">Start the overnight audit</button>
+        <div class="seg" id="au-seg"><button data-v="NIRVANA_CSV" class="on">CSV copy</button><button data-v="NIRVANA_TPCDS">Parquet copy</button></div>
+        <button class="btn primary" id="au-go">Start audit</button>
         <span class="note" id="au-msg"></span>
       </div></div></div>
     <div id="au-list"><div class="empty">Loading</div></div>`;
+  let target = "NIRVANA_CSV";
+  pane.querySelectorAll("#au-seg button").forEach((b) => b.addEventListener("click", () => {
+    target = b.dataset.v;
+    pane.querySelectorAll("#au-seg button").forEach((x) => x.classList.toggle("on", x === b));
+  }));
   const list = document.getElementById("au-list");
   let timer = null;
   const load = async () => {
     try {
-      const all = await api("/audits");
-      list.innerHTML = all.length ? all.map(auditCard).join("") : `<div class="panel"><div class="empty">No audit yet.</div></div>`;
-      const c = document.getElementById("count-audit");
-      if (c) c.textContent = all.length || "";
+      const all = (await api("/audits")).filter((a) => a.status !== "failed" || (a.phases || [])[0]?.status === "done");
+      const [first, ...rest] = all;
+      list.innerHTML = first ? auditCard(first, true) + (rest.length ? `<details class="older"><summary>Earlier audits (${rest.length})</summary>${rest.map((a) => auditCard(a, false)).join("")}</details>` : "")
+        : `<div class="panel"><div class="empty">No audit yet.</div></div>`;
       clearTimeout(timer);
       if (all.some((a) => a.status === "running") && location.pathname.startsWith("/app/audit")) timer = setTimeout(load, 3000);
     } catch (e) { list.innerHTML = `<div class="panel"><div class="empty">${esc(e.message)}</div></div>`; }
   };
   document.getElementById("au-go").addEventListener("click", async () => {
     const m = document.getElementById("au-msg");
-    try { await api("/audits", { method: "POST", body: JSON.stringify({ target_location: document.getElementById("au-target").value }) }); m.textContent = ""; load(); }
+    try { await api("/audits", { method: "POST", body: JSON.stringify({ target_location: target }) }); m.textContent = ""; load(); }
     catch (e) { m.className = "error"; m.textContent = e.message; }
   });
   load();
