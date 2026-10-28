@@ -679,7 +679,7 @@ async function paneGuard() {
 
 // ------------------------------------------------------------------ agent
 
-const TOOL_LABEL = { profile_column: "Profile a column", compare_column: "Compare a column across engines", verify_repair: "Verify a repair", install_guard: "Install a Zetaris guard rule", try_rewrite: "Try a rewrite", apply_rule: "Apply a rewrite rule", round_output: "Read outputs at source precision", finish: "Finish", model: "Model reply" };
+const TOOL_LABEL = { profile_column: "Profile a column", compare_column: "Compare a column across engines", verify_repair: "Verify a repair", install_guard: "Install a Zetaris guard rule", try_rewrite: "Try a rewrite", apply_rule: "Apply a rewrite rule", round_output: "Read outputs at source precision", cast_output: "Read outputs at the source's declared types", finish: "Finish", model: "Model reply" };
 
 function stepResult(st) {
   const r = st.result || {};
