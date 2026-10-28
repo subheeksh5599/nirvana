@@ -175,7 +175,7 @@ uv run pytest -q
 ```
 
 ```
-1288 passed in 13.41s
+1343 passed in 15.75s
 ```
 
 The suite runs real SQL. Each test of the judge sets up DuckDB connections over the same generated TPC-DS rows and changes one documented thing on the target: `SET SESSION integer_division = true`, `SET SESSION default_null_order = 'nulls_last'`, the DECIMAL columns stored as REAL, or the rows of `item` stored in shuffled order. Then it asserts the cause the judge proves. None of these tests imitates an engine. HTTP doubles stand in only where a vendor's wire format is under test (Databricks statements API, Zetaris REST, Meterless provider), and they speak the shapes those vendors document.
@@ -416,7 +416,7 @@ The 103 TPC-DS query texts as Apache Spark renders them (99 templates; 14, 23, 2
 
 | Claim | State |
 |---|---|
-| 1,288 tests pass, executing real SQL on DuckDB and the real H-MEM engine | real (`uv run pytest -q`) |
+| 1,343 tests pass, executing real SQL on DuckDB and the real H-MEM engine | real (`uv run pytest -q`) |
 | Full 103-query rehearsal run | real, two local DuckDB engines, labelled rehearsal |
 | Databricks client | real: ran all 103 queries and 24 table profiles on a Databricks Free Edition serverless warehouse |
 | Zetaris client | real: ran all 103 queries, 24 table profiles and the filestore registrations on Zetaris Lightning (local docker, hackathon build); the live response shape (`headers` + `data`) is pinned in tests |
@@ -458,7 +458,7 @@ The 103 TPC-DS query texts as Apache Spark renders them (99 templates; 14, 23, 2
 
 ## Tech stack
 
-Python 3.12, FastAPI, httpx, sqlglot 30, DuckDB 2.0, SQLite, pytest and Hypothesis (1,288 tests). Node with tsx runs the vendored Meterless H-MEM reference engine. Zetaris Lightning (REST), the Databricks SQL Statement Execution API, and the Meterless provider contract 0.90.0 with NVIDIA Nemotron.
+Python 3.12, FastAPI, httpx, sqlglot 30, DuckDB 2.0, SQLite, pytest and Hypothesis (1,343 tests). Node with tsx runs the vendored Meterless H-MEM reference engine. Zetaris Lightning (REST), the Databricks SQL Statement Execution API, and the Meterless provider contract 0.90.0 with NVIDIA Nemotron.
 
 ## Project layout
 
@@ -473,7 +473,7 @@ src/nirvana/
 web/dist/                           the web app (plain HTML, CSS and JS, fonts served locally)
 bridges/hmem.ts                     JSON-lines bridge to H-MEM
 vendor/meterless/hmem/              H-MEM reference engine, unchanged (UPSTREAM.md)
-tests/                              1,288 tests
+tests/                              1,343 tests
 recordings/                         finished live runs served in recorded mode
 ```
 
@@ -499,7 +499,7 @@ The live mode needs both engines reachable, so it runs where Zetaris runs. Recor
 
 ```
 uv run pytest -q
-1288 passed in 13.41s
+1343 passed in 15.75s
 ```
 
 | File | What it covers |
